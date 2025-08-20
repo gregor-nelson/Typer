@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { SessionTracker } from "./SessionTracker";
 
 // --- Utility helpers ------------------------------------------------------
 const clamp = (n, a, b) => Math.min(Math.max(n, a), b);
@@ -198,21 +199,21 @@ function CustomTextModal({ isOpen, onClose, onSave, library, onDeletePassage }) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-8">
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 sm:p-8">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white w-full max-w-6xl max-h-[90vh] flex flex-col shadow-2xl"
+        className="bg-white w-full max-w-6xl max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl mx-4 sm:mx-0"
         style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-12 py-8 bg-gray-50">
+        <div className="flex items-center justify-between px-4 sm:px-8 lg:px-12 py-4 sm:py-6 lg:py-8 bg-gray-50">
           <div className="flex items-center gap-4">
-            <h2 className="text-2xl font-bold text-gray-700">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-700">
               {editingId ? "Edit Passage" : currentView === "manage" ? "Manage Passages" : "Add Custom Text"}
             </h2>
-            <div className="flex gap-2">
+            <div className="flex gap-1 sm:gap-2 text-xs sm:text-sm">
               <button
                 onClick={() => setCurrentView("form")}
                 className={`px-3 py-1 text-sm transition-colors duration-200 ${currentView === "form" ? 'bg-gray-700 text-white' : 'text-gray-600 hover:text-gray-800'}`}
@@ -229,7 +230,7 @@ function CustomTextModal({ isOpen, onClose, onSave, library, onDeletePassage }) 
           </div>
           <button
             onClick={handleCancel}
-            className="text-gray-400 hover:text-gray-600 text-3xl leading-none transition-colors duration-200"
+            className="text-gray-400 hover:text-gray-600 text-2xl sm:text-3xl leading-none transition-colors duration-200 p-2 sm:p-0"
             aria-label="Close modal"
           >
             ×
@@ -240,7 +241,7 @@ function CustomTextModal({ isOpen, onClose, onSave, library, onDeletePassage }) 
         <div className="flex-1 flex overflow-hidden">
           {currentView === "manage" ? (
             /* Manage View */
-            <div className="flex-1 p-12">
+            <div className="flex-1 p-4 sm:p-8 lg:p-12">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-700">Your Custom Passages</h3>
                 <button
@@ -297,7 +298,7 @@ function CustomTextModal({ isOpen, onClose, onSave, library, onDeletePassage }) 
             </div>
           ) : (
             /* Form View */
-            <div className="flex-1 px-12 py-8 space-y-8 overflow-y-auto">
+            <div className="flex-1 px-4 sm:px-8 lg:px-12 py-4 sm:py-6 lg:py-8 space-y-6 sm:space-y-8 overflow-y-auto">
               {/* Title Input */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
@@ -313,7 +314,7 @@ function CustomTextModal({ isOpen, onClose, onSave, library, onDeletePassage }) 
               </div>
 
               {/* Processing Options */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-3">
                     Maximum Length
@@ -358,7 +359,7 @@ function CustomTextModal({ isOpen, onClose, onSave, library, onDeletePassage }) 
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   placeholder="Paste or type your passage content here..."
-                  className="w-full h-48 px-0 py-4 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none resize-none font-mono text-base leading-relaxed transition-colors duration-200"
+                  className="w-full h-32 sm:h-48 px-0 py-4 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none resize-none font-mono text-sm sm:text-base leading-relaxed transition-colors duration-200"
                 />
                 {text && (
                   <div className="text-sm text-gray-500 flex justify-between pt-4">
@@ -374,7 +375,7 @@ function CustomTextModal({ isOpen, onClose, onSave, library, onDeletePassage }) 
                   <label className="block text-sm font-semibold text-gray-700">
                     Preview
                   </label>
-                  <div className="max-h-32 overflow-y-auto p-4 bg-gray-50 text-base font-mono leading-relaxed">
+                  <div className="max-h-24 sm:max-h-32 overflow-y-auto p-3 sm:p-4 bg-gray-50 text-sm sm:text-base font-mono leading-relaxed">
                     {processedText}
                   </div>
                 </div>
@@ -385,7 +386,7 @@ function CustomTextModal({ isOpen, onClose, onSave, library, onDeletePassage }) 
 
         {/* Footer */}
         {currentView === "form" && (
-          <div className="flex items-center justify-end gap-4 px-12 py-8 bg-gray-50">
+          <div className="flex items-center justify-end gap-3 sm:gap-4 px-4 sm:px-8 lg:px-12 py-4 sm:py-6 lg:py-8 bg-gray-50">
             <button
               onClick={handleCancel}
               className="px-6 py-3 text-gray-600 hover:text-gray-800 font-semibold transition-colors duration-200"
@@ -437,12 +438,12 @@ function SettingsModal({ isOpen, onClose, settings, onSave }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-8">
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 sm:p-8">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl"
+        className="bg-white w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl mx-4 sm:mx-0"
         style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
       >
         {/* Header */}
@@ -739,7 +740,7 @@ function PerformanceMetrics({ wpm, accuracy, errors, elapsedMs, state }) {
 }
 
 // --- Main Component --------------------------------------------------------
-export default function TypeTutorRacerPOC() {
+function TypeTutorRacerPOC({ sessionData }) {
   const [library, setLibrary] = useState(() => loadLib());
   const [selectedBuiltIn, setSelectedBuiltIn] = useState(BUILT_IN[0].id);
   const [customText, setCustomText] = useState("");
@@ -930,6 +931,7 @@ export default function TypeTutorRacerPOC() {
     const entry = {
       id: uid(),
       date: new Date().toISOString(),
+      timestamp: new Date().toISOString(),
       title: sourceTitle || (customText ? "Custom Upload" : BUILT_IN.find(b => b.id === selectedBuiltIn)?.title),
       wpm: humanWPM,
       accuracy,
@@ -937,9 +939,16 @@ export default function TypeTutorRacerPOC() {
       length: text.length,
       placing,
       opponents: bots.map((b) => ({ name: b.name, wpm: b.wpm })),
+      timeTaken,
+      passageType: customText ? 'custom' : 'built-in',
     };
     const history = [entry, ...(stats.history || [])].slice(0, 25);
     saveStats({ history });
+
+    // Record in session tracker if available
+    if (sessionData && sessionData.recordRace) {
+      sessionData.recordRace(entry);
+    }
   };
 
   // Controls
@@ -1071,7 +1080,7 @@ export default function TypeTutorRacerPOC() {
     );
 
     return (
-      <div className="p-4 bg-white font-mono text-gray-800 leading-relaxed text-lg min-h-[150px] break-words overflow-wrap-anywhere max-w-full">
+      <div className="p-3 sm:p-4 bg-white font-mono text-gray-800 leading-relaxed text-base sm:text-lg min-h-[120px] sm:min-h-[150px] break-words overflow-wrap-anywhere max-w-full">
         {words.map((word, wordIndex) => {
           const isCompleted = wordIndex < currentWordIndex;
           const isCurrent = wordIndex === currentWordIndex;
@@ -1125,13 +1134,39 @@ export default function TypeTutorRacerPOC() {
 
   return (
     <div 
-      className="min-h-screen w-full bg-white text-gray-800"
+      className="min-h-screen w-full bg-white text-gray-800 touch-manipulation"
       style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
     >
-      <div className="max-w-6xl mx-auto px-6 py-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         
         {/* Compact Progress - Always Visible */}
         <section className="mb-6">
+          {/* Session Status Indicator */}
+          {sessionData && sessionData.currentSession && sessionData.currentSession.totalRaces > 0 && (
+            <div className="flex items-center gap-2 mb-3 text-xs text-gray-500 flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Session:</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  <i className="ph ph-flag text-xs"></i>
+                  <span>{sessionData.currentSession.totalRaces} races</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <i className="ph ph-speedometer text-xs"></i>
+                  <span>{Math.round(sessionData.currentSession.averageWPM || 0)} avg WPM</span>
+                </div>
+              </div>
+              {sessionData.currentSession.totalRaces >= 3 && (
+                <span className={`flex items-center gap-1 ${sessionData.currentSession.improvementRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <i className={`ph ph-${sessionData.currentSession.improvementRate >= 0 ? 'trend-up' : 'trend-down'} text-xs`}></i>
+                  <span>{Math.abs(Math.round(sessionData.currentSession.improvementRate))} WPM/race</span>
+                </span>
+              )}
+            </div>
+          )}
+          
           <div className="space-y-2">
             {racers.map((racer, index) => {
               const progress = text.length > 0 ? Math.min(100, (racer.progress / text.length) * 100) : 0;
@@ -1141,20 +1176,20 @@ export default function TypeTutorRacerPOC() {
                                  state === "running" ? "Racing" : "Finished";
               
               return (
-                <div key={racer.id} className="flex items-center gap-3 text-sm">
-                  <div className={`w-16 font-semibold ${racer.isPlayer ? 'text-gray-700' : 'text-gray-500'}`}>
+                <div key={racer.id} className="flex items-center gap-2 sm:gap-3 text-sm">
+                  <div className={`w-12 sm:w-16 font-semibold ${racer.isPlayer ? 'text-gray-700' : 'text-gray-500'} text-xs sm:text-sm truncate`}>
                     {racer.name}
                   </div>
-                  <div className="flex-1 bg-gray-200 h-2 overflow-hidden">
+                  <div className="flex-1 bg-gray-200 h-2 overflow-hidden min-w-0">
                     <div 
                       className={`h-full transition-all duration-300 ${racer.isPlayer ? 'bg-gray-700' : 'bg-gray-400'}`}
                       style={{ width: `${progress}%` }}
                     />
                   </div>
-                  <div className="w-12 text-xs text-gray-500 text-right">
+                  <div className="w-8 sm:w-12 text-xs text-gray-500 text-right">
                     {Math.round(progress)}%
                   </div>
-                  <div className="w-16 text-xs text-gray-500 text-right">
+                  <div className="w-12 sm:w-16 text-xs text-gray-500 text-right">
                     {state === "idle" ? displayStatus : `${displayWpm} WPM`}
                   </div>
                 </div>
@@ -1170,14 +1205,14 @@ export default function TypeTutorRacerPOC() {
           </div>
           
           {/* Input with Inline Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-stretch gap-2 sm:gap-3">
             <input
               ref={inputRef}
               disabled={state !== "running"}
               value={currentTypedWord}
               onChange={onType}
               placeholder={state === "running" ? "Start typing here..." : "Click play to begin"}
-              className="flex-1 px-4 py-4 bg-gray-50 border-0 outline-none text-lg font-mono disabled:opacity-50 transition-colors duration-200"
+              className="flex-1 px-3 sm:px-4 py-3 sm:py-4 bg-gray-50 border-0 outline-none text-base sm:text-lg font-mono disabled:opacity-50 transition-colors duration-200 min-w-0"
               aria-label="Type the displayed passage here"
             />
             
@@ -1185,33 +1220,46 @@ export default function TypeTutorRacerPOC() {
             <button 
               onClick={startRace}
               disabled={!text}
-              className="p-3 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed border border-transparent hover:border-gray-200"
+              className="p-2 sm:p-3 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed border border-transparent hover:border-gray-200"
               aria-label="Start race"
             >
-              <i className="ph ph-play text-xl"></i>
+              <i className="ph ph-play text-lg sm:text-xl"></i>
             </button>
             
             <button 
               onClick={resetRace}
-              className="p-3 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200 border border-transparent hover:border-gray-200"
+              className="p-2 sm:p-3 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200 border border-transparent hover:border-gray-200"
               aria-label="Reset race"
             >
-              <i className="ph ph-arrow-clockwise text-xl"></i>
+              <i className="ph ph-arrow-clockwise text-lg sm:text-xl"></i>
             </button>
             
             <button 
               onClick={() => setShowSettingsModal(true)}
-              className="p-3 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200 border border-transparent hover:border-gray-200"
+              className="p-2 sm:p-3 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200 border border-transparent hover:border-gray-200"
               aria-label="Settings"
             >
-              <i className="ph ph-gear text-xl"></i>
+              <i className="ph ph-gear text-lg sm:text-xl"></i>
             </button>
+            
+            {/* Session Panel Toggle */}
+            {sessionData && sessionData.currentSession && sessionData.currentSession.totalRaces > 0 && (
+              <button 
+                onClick={() => sessionData.setShowSessionPanel(!sessionData.showSessionPanel)}
+                className={`p-2 sm:p-3 transition-all duration-200 border border-transparent hover:border-gray-200 ${
+                  sessionData.showSessionPanel ? 'text-gray-800 bg-gray-100' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                }`}
+                aria-label="Toggle session progress"
+              >
+                <i className="ph ph-chart-line text-lg sm:text-xl"></i>
+              </button>
+            )}
           </div>
           
           {/* Live Stats Row - Only During Race */}
           {(state === "running" || state === "finished") && (
-            <div className="flex justify-center items-center mt-4 mb-2 py-3 bg-gray-50 text-sm font-mono text-gray-600">
-              <div className="flex gap-8">
+            <div className="flex justify-center items-center mt-4 mb-2 py-2 sm:py-3 bg-gray-50 text-xs sm:text-sm font-mono text-gray-600 overflow-x-auto">
+              <div className="flex gap-4 sm:gap-6 lg:gap-8 min-w-max">
                 <span className="font-semibold">WPM: {Math.round(wpm)}</span>
                 <span className="font-semibold">Accuracy: {accuracy}%</span>
                 <span className="font-semibold">Time: {fmtTime(elapsedMs)}</span>
@@ -1237,10 +1285,10 @@ export default function TypeTutorRacerPOC() {
         </section>
 
         {/* Passage Selection */}
-        <section className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
+        <section className="mb-6 sm:mb-8">
+          <div className="flex items-stretch gap-2 sm:gap-4 mb-4">
             <select
-              className="flex-1 px-0 py-3 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none text-lg transition-colors duration-200"
+              className="flex-1 px-0 py-2 sm:py-3 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none text-base sm:text-lg transition-colors duration-200 min-w-0"
               value={customText ? `custom-${sourceTitle}` : selectedBuiltIn}
               onChange={(e) => {
                 const value = e.target.value;
@@ -1276,33 +1324,33 @@ export default function TypeTutorRacerPOC() {
             </select>
             
             <button
-              className="p-3 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200 border border-transparent hover:border-gray-200"
+              className="p-2 sm:p-3 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200 border border-transparent hover:border-gray-200"
               onClick={() => setShowCustomModal(true)}
               aria-label="Manage passages"
             >
-              <i className="ph ph-folder text-xl"></i>
+              <i className="ph ph-folder text-lg sm:text-xl"></i>
             </button>
           </div>
           
-          <div className="text-sm text-gray-500 text-center">
+          <div className="text-xs sm:text-sm text-gray-500 text-center">
             {sourceTitle} • {text.length} characters
           </div>
         </section>
 
         {/* Recent Performance */}
         {(stats.history || []).length > 0 && (
-          <section className="mt-12">
+          <section className="mt-8 sm:mt-12">
             <div className="text-sm text-gray-500 mb-4 text-center">Recent Performance</div>
             <div className="space-y-3">
               {(stats.history || []).slice(0, 3).map((h) => (
-                <div key={h.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-700 text-sm">{h.title}</div>
+                <div key={h.id} className="flex items-center justify-between py-2 sm:py-3 border-b border-gray-100 last:border-b-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-700 text-xs sm:text-sm truncate">{h.title}</div>
                     <div className="text-xs text-gray-500">
                       {new Date(h.date).toLocaleDateString()}
                     </div>
                   </div>
-                  <div className="flex gap-6 text-sm text-gray-600">
+                  <div className="flex gap-3 sm:gap-6 text-xs sm:text-sm text-gray-600">
                     <span>{h.wpm} WPM</span>
                     <span>{h.accuracy}%</span>
                     <span>#{h.placing}</span>
@@ -1346,5 +1394,33 @@ export default function TypeTutorRacerPOC() {
         </AnimatePresence>
       </div>
     </div>
+  );
+}
+
+// --- Session-Enhanced App Export ------------------------------------------
+export default function TypeTutorRacerPOCWithSession() {
+  return (
+    <SessionTracker
+      onRaceComplete={(raceData, session) => {
+        // Optional: Handle race completion events
+        console.log('Race completed:', raceData);
+        console.log('Session stats:', {
+          totalRaces: session.totalRaces,
+          averageWPM: session.averageWPM,
+          improvement: session.improvementRate,
+        });
+      }}
+    >
+      {({ currentSession, recordRace, showSessionPanel, setShowSessionPanel }) => (
+        <TypeTutorRacerPOC 
+          sessionData={{
+            currentSession,
+            recordRace,
+            showSessionPanel,
+            setShowSessionPanel,
+          }}
+        />
+      )}
+    </SessionTracker>
   );
 }
