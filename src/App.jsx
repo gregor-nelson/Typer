@@ -118,12 +118,14 @@ const loadStats = () => {
 };
 const saveStats = (stats) => localStorage.setItem(LS.STATS, JSON.stringify(stats || { history: [] }));
 
-// --- Minimal Custom Text Modal Component ----------------------------------
-function CustomTextModal({ isOpen, onClose, onSave }) {
+// --- Enhanced Custom Text Modal Component ----------------------------------
+function CustomTextModal({ isOpen, onClose, onSave, library, onDeletePassage }) {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [beginnerMode, setBeginnerMode] = useState(false);
   const [maxLength, setMaxLength] = useState(800);
+  const [currentView, setCurrentView] = useState("form"); // "form" or "manage"
+  const [editingId, setEditingId] = useState(null);
   const textareaRef = useRef(null);
 
   const processedText = useMemo(() => {
@@ -158,21 +160,39 @@ function CustomTextModal({ isOpen, onClose, onSave }) {
 
   const handleSave = () => {
     if (processedText) {
-      onSave(title || "Custom Passage", processedText);
-      setTitle("");
-      setText("");
-      setBeginnerMode(false);
-      setMaxLength(800);
-      onClose();
+      onSave(title || "Custom Passage", processedText, editingId);
+      resetForm();
     }
   };
 
-  const handleCancel = () => {
+  const resetForm = () => {
     setTitle("");
     setText("");
     setBeginnerMode(false);
     setMaxLength(800);
+    setEditingId(null);
+    setCurrentView("form");
     onClose();
+  };
+
+  const startEdit = (passage) => {
+    setTitle(passage.title);
+    setText(passage.text);
+    setEditingId(passage.id);
+    setCurrentView("form");
+  };
+
+  const startNewPassage = () => {
+    setTitle("");
+    setText("");
+    setBeginnerMode(false);
+    setMaxLength(800);
+    setEditingId(null);
+    setCurrentView("form");
+  };
+
+  const handleCancel = () => {
+    resetForm();
   };
 
   if (!isOpen) return null;
@@ -183,12 +203,30 @@ function CustomTextModal({ isOpen, onClose, onSave }) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl"
+        className="bg-white w-full max-w-6xl max-h-[90vh] flex flex-col shadow-2xl"
         style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-12 py-8 bg-gray-50">
-          <h2 className="text-2xl font-bold text-gray-700">Add Custom Text</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-bold text-gray-700">
+              {editingId ? "Edit Passage" : currentView === "manage" ? "Manage Passages" : "Add Custom Text"}
+            </h2>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentView("form")}
+                className={`px-3 py-1 text-sm transition-colors duration-200 ${currentView === "form" ? 'bg-gray-700 text-white' : 'text-gray-600 hover:text-gray-800'}`}
+              >
+                {editingId ? "Edit" : "Add New"}
+              </button>
+              <button
+                onClick={() => setCurrentView("manage")}
+                className={`px-3 py-1 text-sm transition-colors duration-200 ${currentView === "manage" ? 'bg-gray-700 text-white' : 'text-gray-600 hover:text-gray-800'}`}
+              >
+                Manage ({library.length})
+              </button>
+            </div>
+          </div>
           <button
             onClick={handleCancel}
             className="text-gray-400 hover:text-gray-600 text-3xl leading-none transition-colors duration-200"
@@ -199,106 +237,170 @@ function CustomTextModal({ isOpen, onClose, onSave }) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 px-12 py-8 space-y-8 overflow-y-auto">
-          {/* Title Input */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Title
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter a descriptive title for your passage"
-              className="w-full px-0 py-3 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none text-lg transition-colors duration-200"
-            />
-          </div>
-
-          {/* Processing Options */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Maximum Length
-              </label>
-              <select
-                value={maxLength}
-                onChange={(e) => setMaxLength(Number(e.target.value))}
-                className="w-full px-0 py-3 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none text-lg transition-colors duration-200"
-              >
-                <option value={400}>Short (400 characters)</option>
-                <option value={800}>Medium (800 characters)</option>
-                <option value={1200}>Long (1200 characters)</option>
-                <option value={2000}>Extended (2000 characters)</option>
-              </select>
+        <div className="flex-1 flex overflow-hidden">
+          {currentView === "manage" ? (
+            /* Manage View */
+            <div className="flex-1 p-12">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-700">Your Custom Passages</h3>
+                <button
+                  onClick={startNewPassage}
+                  className="px-4 py-2 bg-gray-700 text-white hover:bg-gray-800 text-sm transition-colors duration-200"
+                >
+                  Add New Passage
+                </button>
+              </div>
+              
+              {library.length === 0 ? (
+                <div className="text-center py-16 text-gray-500">
+                  <div className="text-xl font-semibold mb-2">No Custom Passages</div>
+                  <div>Click "Add New Passage" to create your first custom passage.</div>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                  {library.map((passage) => (
+                    <div key={passage.id} className="p-4 bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-800 mb-2">{passage.title}</h4>
+                          <p className="text-sm text-gray-600 mb-2">
+                            {passage.text.substring(0, 120)}
+                            {passage.text.length > 120 ? "..." : ""}
+                          </p>
+                          <div className="text-xs text-gray-500">
+                            {passage.text.length} chars • {passage.text.trim().split(/\s+/).length} words
+                          </div>
+                        </div>
+                        <div className="flex gap-2 ml-4">
+                          <button
+                            onClick={() => startEdit(passage)}
+                            className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-200 transition-colors duration-200"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Delete "${passage.title}"? This cannot be undone.`)) {
+                                onDeletePassage(passage.id);
+                              }
+                            }}
+                            className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 transition-colors duration-200"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            
-            <div className="flex flex-col justify-center">
-              <label className="flex items-center space-x-3 cursor-pointer">
+          ) : (
+            /* Form View */
+            <div className="flex-1 px-12 py-8 space-y-8 overflow-y-auto">
+              {/* Title Input */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  Title
+                </label>
                 <input
-                  type="checkbox"
-                  checked={beginnerMode}
-                  onChange={(e) => setBeginnerMode(e.target.checked)}
-                  className="w-5 h-5 text-gray-600"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter a descriptive title for your passage"
+                  className="w-full px-0 py-3 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none text-lg transition-colors duration-200"
                 />
-                <span className="text-sm font-semibold text-gray-700">
-                  Beginner Mode
-                </span>
-              </label>
-              <p className="text-sm text-gray-500 mt-2 ml-8">
-                Simplifies punctuation and removes special characters
-              </p>
-            </div>
-          </div>
-
-          {/* Text Area */}
-          <div className="space-y-4">
-            <label className="block text-sm font-semibold text-gray-700">
-              Text Content
-            </label>
-            <textarea
-              ref={textareaRef}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Paste or type your passage content here..."
-              className="w-full h-48 px-0 py-4 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none resize-none font-mono text-base leading-relaxed transition-colors duration-200"
-            />
-            {text && (
-              <div className="text-sm text-gray-500 flex justify-between pt-4">
-                <span>Original: {text.length} chars • {text.trim().split(/\s+/).length} words</span>
-                <span>Processed: {processedText.length} chars • {processedText.trim().split(/\s+/).length} words</span>
               </div>
-            )}
-          </div>
 
-          {/* Preview */}
-          {processedText && (
-            <div className="space-y-4">
-              <label className="block text-sm font-semibold text-gray-700">
-                Preview
-              </label>
-              <div className="max-h-32 overflow-y-auto p-4 bg-gray-50 text-base font-mono leading-relaxed">
-                {processedText}
+              {/* Processing Options */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    Maximum Length
+                  </label>
+                  <select
+                    value={maxLength}
+                    onChange={(e) => setMaxLength(Number(e.target.value))}
+                    className="w-full px-0 py-3 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none text-lg transition-colors duration-200"
+                  >
+                    <option value={400}>Short (400 characters)</option>
+                    <option value={800}>Medium (800 characters)</option>
+                    <option value={1200}>Long (1200 characters)</option>
+                    <option value={2000}>Extended (2000 characters)</option>
+                  </select>
+                </div>
+                
+                <div className="flex flex-col justify-center">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={beginnerMode}
+                      onChange={(e) => setBeginnerMode(e.target.checked)}
+                      className="w-5 h-5 text-gray-600"
+                    />
+                    <span className="text-sm font-semibold text-gray-700">
+                      Beginner Mode
+                    </span>
+                  </label>
+                  <p className="text-sm text-gray-500 mt-2 ml-8">
+                    Simplifies punctuation and removes special characters
+                  </p>
+                </div>
               </div>
+
+              {/* Text Area */}
+              <div className="space-y-4">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Text Content
+                </label>
+                <textarea
+                  ref={textareaRef}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Paste or type your passage content here..."
+                  className="w-full h-48 px-0 py-4 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none resize-none font-mono text-base leading-relaxed transition-colors duration-200"
+                />
+                {text && (
+                  <div className="text-sm text-gray-500 flex justify-between pt-4">
+                    <span>Original: {text.length} chars • {text.trim().split(/\s+/).length} words</span>
+                    <span>Processed: {processedText.length} chars • {processedText.trim().split(/\s+/).length} words</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Preview */}
+              {processedText && (
+                <div className="space-y-4">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Preview
+                  </label>
+                  <div className="max-h-32 overflow-y-auto p-4 bg-gray-50 text-base font-mono leading-relaxed">
+                    {processedText}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-4 px-12 py-8 bg-gray-50">
-          <button
-            onClick={handleCancel}
-            className="px-6 py-3 text-gray-600 hover:text-gray-800 font-semibold transition-colors duration-200"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!processedText.trim()}
-            className="px-6 py-3 bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors duration-200"
-          >
-            Save & Use
-          </button>
-        </div>
+        {currentView === "form" && (
+          <div className="flex items-center justify-end gap-4 px-12 py-8 bg-gray-50">
+            <button
+              onClick={handleCancel}
+              className="px-6 py-3 text-gray-600 hover:text-gray-800 font-semibold transition-colors duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!processedText.trim()}
+              className="px-6 py-3 bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors duration-200"
+            >
+              {editingId ? "Update Passage" : "Save & Use"}
+            </button>
+          </div>
+        )}
       </motion.div>
     </div>
   );
@@ -911,39 +1013,42 @@ export default function TypeTutorRacerPOC() {
     }
   };
 
-  // File upload
-  const onUpload = async (file) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const t = cleanText(String(reader.result || ""));
-      setCustomText(t);
-      setSourceTitle(file.name);
-    };
-    reader.readAsText(file);
-  };
 
-  // Library management
-  const saveCurrentToLibrary = () => {
-    const title = prompt("Save this passage as:", sourceTitle || "Custom passage");
-    if (!title) return;
-    const lib = loadLib();
-    const entry = { id: uid(), title, text };
-    const updated = [entry, ...lib].slice(0, 50);
-    saveLib(updated);
-    setLibrary(updated);
-    alert("Passage saved to library.");
-  };
 
-  const handleCustomTextSave = (title, text) => {
+  const handleCustomTextSave = (title, text, editingId = null) => {
     setCustomText(text);
     setSourceTitle(title);
     
     const lib = loadLib();
-    const entry = { id: uid(), title, text };
-    const updated = [entry, ...lib].slice(0, 50);
+    let updated;
+    
+    if (editingId) {
+      // Update existing passage
+      updated = lib.map(item => 
+        item.id === editingId ? { ...item, title, text } : item
+      );
+    } else {
+      // Add new passage
+      const entry = { id: uid(), title, text };
+      updated = [entry, ...lib].slice(0, 50);
+    }
+    
     saveLib(updated);
     setLibrary(updated);
+  };
+
+  const handleDeletePassage = (passageId) => {
+    const lib = loadLib();
+    const updated = lib.filter(item => item.id !== passageId);
+    saveLib(updated);
+    setLibrary(updated);
+    
+    // If currently selected passage is deleted, reset to built-in
+    if (customText && library.find(item => item.id === passageId)) {
+      setCustomText("");
+      setSelectedBuiltIn(BUILT_IN[0].id);
+      setSourceTitle("Built-in passage");
+    }
   };
 
   const handleSettingsSave = (newSettings) => {
@@ -1131,121 +1236,89 @@ export default function TypeTutorRacerPOC() {
           </div>
         </section>
 
-        {/* Passage Management */}
-        <section className="mb-8 py-6 bg-gray-50">
-          <h3 className="text-lg font-bold text-gray-700 mb-4 text-center">
-            Passage Library
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-4">
-                Select Passage
-              </label>
-              <select
-                className="w-full px-0 py-3 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none text-lg"
-                value={customText ? `custom-${sourceTitle}` : selectedBuiltIn}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value.startsWith('custom-')) {
-                    const customTitle = value.replace('custom-', '');
-                    const item = library.find(x => x.title === customTitle);
-                    if (item) {
-                      setCustomText(item.text);
-                      setSourceTitle(item.title);
-                      setSelectedBuiltIn("");
-                    }
-                  } else {
-                    setSelectedBuiltIn(value);
-                    setCustomText("");
-                    setSourceTitle("Built-in passage");
+        {/* Passage Selection */}
+        <section className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <select
+              className="flex-1 px-0 py-3 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none text-lg transition-colors duration-200"
+              value={customText ? `custom-${sourceTitle}` : selectedBuiltIn}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.startsWith('custom-')) {
+                  const customTitle = value.replace('custom-', '');
+                  const item = library.find(x => x.title === customTitle);
+                  if (item) {
+                    setCustomText(item.text);
+                    setSourceTitle(item.title);
+                    setSelectedBuiltIn("");
                   }
-                }}
-              >
-                <optgroup label="Built-in Educational Passages">
-                  {BUILT_IN.map((b) => (
-                    <option key={b.id} value={b.id}>{b.title}</option>
+                } else {
+                  setSelectedBuiltIn(value);
+                  setCustomText("");
+                  setSourceTitle("Built-in passage");
+                }
+              }}
+            >
+              <optgroup label="Built-in">
+                {BUILT_IN.map((b) => (
+                  <option key={b.id} value={b.id}>{b.title}</option>
+                ))}
+              </optgroup>
+              {library.length > 0 && (
+                <optgroup label="Custom">
+                  {library.map((item) => (
+                    <option key={item.id} value={`custom-${item.title}`}>
+                      {item.title}
+                    </option>
                   ))}
                 </optgroup>
-                {library.length > 0 && (
-                  <optgroup label="Custom Passages">
-                    {library.map((item) => (
-                      <option key={item.id} value={`custom-${item.title}`}>
-                        {item.title}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
-            </div>
+              )}
+            </select>
             
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-4">
-                Upload Text File
-              </label>
-              <input
-                type="file"
-                accept=".txt,.md"
-                className="w-full text-base py-3 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none"
-                onChange={(e) => onUpload(e.target.files?.[0])}
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-center gap-4">
             <button
-              className="px-4 py-2 bg-gray-700 text-white hover:bg-gray-800 font-medium text-sm transition-colors duration-200"
+              className="p-3 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200 border border-transparent hover:border-gray-200"
               onClick={() => setShowCustomModal(true)}
+              aria-label="Manage passages"
             >
-              Add Custom Text
+              <i className="ph ph-folder text-xl"></i>
             </button>
-            
-            <button 
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium text-sm transition-colors duration-200" 
-              onClick={saveCurrentToLibrary}
-              disabled={!text}
-            >
-              Save to Library
-            </button>
+          </div>
+          
+          <div className="text-sm text-gray-500 text-center">
+            {sourceTitle} • {text.length} characters
           </div>
         </section>
 
-        {/* Performance History */}
-        <section className="py-6 bg-gray-50">
-          <h3 className="text-lg font-bold text-gray-700 mb-4 text-center">
-            Performance History
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(stats.history || []).slice(0, 6).map((h) => (
-              <div key={h.id} className="p-4 bg-white">
-                <div className="font-bold text-lg mb-2 text-gray-700">{h.title}</div>
-                <div className="text-sm text-gray-500 mb-4">
-                  {new Date(h.date).toLocaleDateString()}
-                </div>
-                <div className="grid grid-cols-3 gap-6 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-gray-700">{h.wpm}</div>
-                    <div className="text-xs text-gray-500 uppercase font-semibold">WPM</div>
+        {/* Recent Performance */}
+        {(stats.history || []).length > 0 && (
+          <section className="mt-12">
+            <div className="text-sm text-gray-500 mb-4 text-center">Recent Performance</div>
+            <div className="space-y-3">
+              {(stats.history || []).slice(0, 3).map((h) => (
+                <div key={h.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-700 text-sm">{h.title}</div>
+                    <div className="text-xs text-gray-500">
+                      {new Date(h.date).toLocaleDateString()}
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-700">{h.accuracy}%</div>
-                    <div className="text-xs text-gray-500 uppercase font-semibold">Accuracy</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-700">#{h.placing}</div>
-                    <div className="text-xs text-gray-500 uppercase font-semibold">Place</div>
+                  <div className="flex gap-6 text-sm text-gray-600">
+                    <span>{h.wpm} WPM</span>
+                    <span>{h.accuracy}%</span>
+                    <span>#{h.placing}</span>
                   </div>
                 </div>
-              </div>
-            ))}
-            {(stats.history || []).length === 0 && (
-              <div className="col-span-full text-center text-gray-500 py-16">
-                <div className="text-xl font-semibold mb-2">No Performance Data</div>
-                <div>Complete your first race to see results.</div>
+              ))}
+            </div>
+            {(stats.history || []).length > 3 && (
+              <div className="text-center mt-4">
+                <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200">
+                  View all {(stats.history || []).length} races
+                </button>
               </div>
             )}
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Custom Text Modal */}
         <AnimatePresence>
@@ -1254,6 +1327,8 @@ export default function TypeTutorRacerPOC() {
               isOpen={showCustomModal}
               onClose={() => setShowCustomModal(false)}
               onSave={handleCustomTextSave}
+              library={library}
+              onDeletePassage={handleDeletePassage}
             />
           )}
         </AnimatePresence>
