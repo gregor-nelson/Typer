@@ -304,6 +304,171 @@ function CustomTextModal({ isOpen, onClose, onSave }) {
   );
 }
 
+// --- Settings Modal Component ---------------------------------------------
+function SettingsModal({ isOpen, onClose, settings, onSave }) {
+  const [localSettings, setLocalSettings] = useState(settings);
+
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings, isOpen]);
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+
+  const handleSave = () => {
+    onSave(localSettings);
+    onClose();
+  };
+
+  const handleCancel = () => {
+    setLocalSettings(settings);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-8">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl"
+        style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b">
+          <h2 className="text-lg font-bold text-gray-700">Race Settings</h2>
+          <button
+            onClick={handleCancel}
+            className="text-gray-400 hover:text-gray-600 text-2xl leading-none transition-colors duration-200"
+            aria-label="Close modal"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 px-6 py-6 space-y-6 overflow-y-auto">
+          
+          {/* AI Opponents */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              AI Opponents: {localSettings.numBots}
+            </label>
+            <input 
+              type="range" 
+              min={0} 
+              max={5} 
+              value={localSettings.numBots} 
+              onChange={(e) => setLocalSettings({...localSettings, numBots: Number(e.target.value)})}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>0</span>
+              <span>5</span>
+            </div>
+          </div>
+
+          {/* Difficulty Level */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              Difficulty Level
+            </label>
+            <select 
+              className="w-full px-3 py-2 border border-gray-300 focus:border-gray-600 outline-none text-sm"
+              value={localSettings.profile} 
+              onChange={(e) => setLocalSettings({...localSettings, profile: e.target.value})}
+            >
+              <option value="chill">Beginner (35-45 WPM)</option>
+              <option value="balanced">Intermediate (55-70 WPM)</option>
+              <option value="speedy">Advanced (85-110 WPM)</option>
+            </select>
+          </div>
+
+          {/* Countdown Timer */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              Countdown Timer: {localSettings.countdown}s
+            </label>
+            <input 
+              type="range" 
+              min={1} 
+              max={10} 
+              value={localSettings.countdown} 
+              onChange={(e) => setLocalSettings({...localSettings, countdown: Number(e.target.value)})}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>1s</span>
+              <span>10s</span>
+            </div>
+          </div>
+
+          {/* Text Length */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              Text Length: {localSettings.chunkLen} characters
+            </label>
+            <select 
+              className="w-full px-3 py-2 border border-gray-300 focus:border-gray-600 outline-none text-sm"
+              value={localSettings.chunkLen} 
+              onChange={(e) => setLocalSettings({...localSettings, chunkLen: Number(e.target.value)})}
+            >
+              <option value={300}>Short (300 chars)</option>
+              <option value={600}>Medium (600 chars)</option>
+              <option value={900}>Long (900 chars)</option>
+              <option value={1200}>Extended (1200 chars)</option>
+            </select>
+          </div>
+
+          {/* Strict Mode */}
+          <div>
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={localSettings.strict} 
+                onChange={(e) => setLocalSettings({...localSettings, strict: e.target.checked})}
+                className="w-4 h-4"
+              />
+              <div>
+                <span className="text-sm font-semibold text-gray-700">Strict Mode</span>
+                <p className="text-xs text-gray-500 mt-1">
+                  Prevents typing incorrect characters
+                </p>
+              </div>
+            </label>
+          </div>
+
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t">
+          <button
+            onClick={handleCancel}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors duration-200"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-gray-700 text-white hover:bg-gray-800 font-medium transition-colors duration-200"
+          >
+            Save Settings
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 // --- Minimal Progress Visualization ---------------------------------------
 function ProgressVisualization({ racers, isRacing, state, textLength }) {
   const canvasRef = useRef(null);
@@ -487,6 +652,7 @@ export default function TypeTutorRacerPOC() {
   
   // Modal state
   const [showCustomModal, setShowCustomModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // Derived text
   const text = useMemo(() => {
@@ -560,13 +726,20 @@ export default function TypeTutorRacerPOC() {
       isPlayer: true
     };
     
-    const botRacers = bots.map(bot => ({
+    // If no bots exist yet, create placeholder bots for idle display
+    const botRacers = bots.length > 0 ? bots.map(bot => ({
       ...bot,
+      isPlayer: false
+    })) : Array.from({ length: numBots }, (_, i) => ({
+      id: `bot-${i}`,
+      name: BOT_NAMES[i % BOT_NAMES.length],
+      wpm: 0,
+      progress: 0,
       isPlayer: false
     }));
     
     return [playerRacer, ...botRacers];
-  }, [wpm, correctChars, bots]);
+  }, [wpm, correctChars, bots, numBots]);
 
   // Focus management
   useEffect(() => {
@@ -773,10 +946,18 @@ export default function TypeTutorRacerPOC() {
     setLibrary(updated);
   };
 
+  const handleSettingsSave = (newSettings) => {
+    setNumBots(newSettings.numBots);
+    setProfile(newSettings.profile);
+    setCountdown(newSettings.countdown);
+    setStrict(newSettings.strict);
+    setChunkLen(newSettings.chunkLen);
+  };
+
   // Text rendering
   const renderText = () => {
     if (!text) return (
-      <div className="p-12 bg-gray-50 font-mono text-gray-500 leading-relaxed text-lg min-h-[200px] flex items-center justify-center">
+      <div className="p-4 bg-gray-50 font-mono text-gray-500 leading-relaxed text-lg min-h-[150px] flex items-center justify-center">
         <div className="text-center">
           <div className="text-xl font-bold mb-2 text-gray-600">No Passage Selected</div>
           <div>Choose a built-in passage or upload your own text to begin</div>
@@ -785,7 +966,7 @@ export default function TypeTutorRacerPOC() {
     );
 
     return (
-      <div className="p-12 bg-white font-mono text-gray-800 leading-relaxed text-lg min-h-[200px]">
+      <div className="p-4 bg-white font-mono text-gray-800 leading-relaxed text-lg min-h-[150px] break-words overflow-wrap-anywhere max-w-full">
         {words.map((word, wordIndex) => {
           const isCompleted = wordIndex < currentWordIndex;
           const isCurrent = wordIndex === currentWordIndex;
@@ -828,172 +1009,135 @@ export default function TypeTutorRacerPOC() {
 
   const stats = loadStats();
 
+  // Current settings object for modal
+  const currentSettings = {
+    numBots,
+    profile,
+    countdown,
+    strict,
+    chunkLen
+  };
+
   return (
     <div 
       className="min-h-screen w-full bg-white text-gray-800"
       style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
     >
-      <div className="max-w-6xl mx-auto px-8 py-12">
+      <div className="max-w-6xl mx-auto px-6 py-6">
         
-        {/* Header */}
-        <header className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-700 mb-4">
-            TypeTutor Racer
-          </h1>
-          <div className="w-24 h-0.5 bg-gray-300 mx-auto mb-6"></div>
-          <p className="text-xl text-gray-600 font-medium">
-            Professional Typing Training System
-          </p>
-        </header>
-
-        {/* Race Status */}
-        <div className="text-center mb-16 py-12 bg-gray-50">
-          <div className="text-3xl font-bold text-gray-700 mb-2">
-            {state === "counting" && `Starting in ${count}...`}
-            {state === "running" && "Race in Progress"}
-            {state === "finished" && "Race Completed"}
-            {state === "idle" && "Ready to Start"}
-          </div>
-          {(state === "running" || state === "finished") && (
-            <PerformanceMetrics 
-              wpm={wpm} 
-              accuracy={accuracy} 
-              errors={errors} 
-              elapsedMs={elapsedMs} 
-              state={state} 
-            />
-          )}
-        </div>
-
-        {/* Race Configuration */}
-        <section className="mb-16 py-12 bg-gray-50">
-          <h2 className="text-2xl font-bold text-gray-700 mb-8 text-center">
-            Race Configuration
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-4xl mx-auto">
-            <div className="text-center">
-              <label className="block text-sm font-semibold text-gray-700 mb-4">
-                AI Opponents
-              </label>
-              <div className="flex items-center justify-center gap-4">
-                <span className="text-3xl font-bold text-gray-700">{numBots}</span>
-                <input 
-                  type="range" 
-                  min={0} 
-                  max={5} 
-                  value={numBots} 
-                  onChange={(e) => setNumBots(Number(e.target.value))}
-                  className="flex-1 max-w-24"
-                />
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <label className="block text-sm font-semibold text-gray-700 mb-4">
-                Difficulty Level
-              </label>
-              <select 
-                className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none text-lg text-center" 
-                value={profile} 
-                onChange={(e) => setProfile(e.target.value)}
-              >
-                <option value="chill">Beginner</option>
-                <option value="balanced">Intermediate</option>
-                <option value="speedy">Advanced</option>
-              </select>
-            </div>
-
-            <div className="text-center">
-              <label className="block text-sm font-semibold text-gray-700 mb-4">
-                Strict Mode
-              </label>
-              <label className="flex items-center justify-center space-x-3 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={strict} 
-                  onChange={(e) => setStrict(e.target.checked)}
-                  className="w-5 h-5"
-                />
-                <span className="text-lg">
-                  {strict ? 'Enabled' : 'Disabled'}
-                </span>
-              </label>
-            </div>
-          </div>
-
-          <div className="flex justify-center gap-6 mt-12">
-            <button 
-              onClick={startRace}
-              disabled={!text}
-              className="px-8 py-4 bg-gray-700 text-white font-semibold text-lg hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {state === "running" ? "Restart Race" : "Start Race"}
-            </button>
-            
-            <button 
-              onClick={resetRace}
-              className="px-6 py-4 text-gray-600 hover:text-gray-800 font-semibold text-lg transition-colors duration-200"
-            >
-              Reset
-            </button>
-          </div>
-        </section>
-
-        {/* Progress Visualization */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-bold text-gray-700 mb-8 text-center">
-            Race Progress
-          </h2>
-          <div className="bg-gray-50 p-1">
-            <ProgressVisualization 
-              racers={racers} 
-              isRacing={state === "running"} 
-              state={state}
-              textLength={text.length}
-            />
+        {/* Compact Progress - Always Visible */}
+        <section className="mb-6">
+          <div className="space-y-2">
+            {racers.map((racer, index) => {
+              const progress = text.length > 0 ? Math.min(100, (racer.progress / text.length) * 100) : 0;
+              const displayWpm = state === "idle" ? 0 : Math.round(racer.wpm);
+              const displayStatus = state === "idle" ? "Ready" : 
+                                 state === "counting" ? "Starting..." :
+                                 state === "running" ? "Racing" : "Finished";
+              
+              return (
+                <div key={racer.id} className="flex items-center gap-3 text-sm">
+                  <div className={`w-16 font-semibold ${racer.isPlayer ? 'text-gray-700' : 'text-gray-500'}`}>
+                    {racer.name}
+                  </div>
+                  <div className="flex-1 bg-gray-200 h-2 overflow-hidden">
+                    <div 
+                      className={`h-full transition-all duration-300 ${racer.isPlayer ? 'bg-gray-700' : 'bg-gray-400'}`}
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <div className="w-12 text-xs text-gray-500 text-right">
+                    {Math.round(progress)}%
+                  </div>
+                  <div className="w-16 text-xs text-gray-500 text-right">
+                    {state === "idle" ? displayStatus : `${displayWpm} WPM`}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 
         {/* Typing Area */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-bold text-gray-700 mb-8 text-center">
-            Typing Area
-          </h2>
-          
-          <div className="mb-8 bg-gray-50 overflow-hidden">
+        <section className="mb-8">
+          <div className="mb-4 bg-gray-50 overflow-hidden max-w-full">
             {renderText()}
           </div>
           
-          <input
-            ref={inputRef}
-            disabled={state !== "running"}
-            value={currentTypedWord}
-            onChange={onType}
-            placeholder={state === "running" ? "Start typing here..." : "Click 'Start Race' to begin"}
-            className="w-full px-6 py-6 bg-gray-50 border-0 outline-none text-xl font-mono disabled:opacity-50 transition-colors duration-200"
-            aria-label="Type the displayed passage here"
-          />
+          {/* Input with Inline Controls */}
+          <div className="flex items-center gap-3">
+            <input
+              ref={inputRef}
+              disabled={state !== "running"}
+              value={currentTypedWord}
+              onChange={onType}
+              placeholder={state === "running" ? "Start typing here..." : "Click play to begin"}
+              className="flex-1 px-4 py-4 bg-gray-50 border-0 outline-none text-lg font-mono disabled:opacity-50 transition-colors duration-200"
+              aria-label="Type the displayed passage here"
+            />
+            
+            {/* Control Icons */}
+            <button 
+              onClick={startRace}
+              disabled={!text}
+              className="p-3 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed border border-transparent hover:border-gray-200"
+              aria-label="Start race"
+            >
+              <i className="ph ph-play text-xl"></i>
+            </button>
+            
+            <button 
+              onClick={resetRace}
+              className="p-3 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200 border border-transparent hover:border-gray-200"
+              aria-label="Reset race"
+            >
+              <i className="ph ph-arrow-clockwise text-xl"></i>
+            </button>
+            
+            <button 
+              onClick={() => setShowSettingsModal(true)}
+              className="p-3 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200 border border-transparent hover:border-gray-200"
+              aria-label="Settings"
+            >
+              <i className="ph ph-gear text-xl"></i>
+            </button>
+          </div>
           
-          <div className="flex justify-between items-center mt-6 text-sm text-gray-500">
+          {/* Live Stats Row - Only During Race */}
+          {(state === "running" || state === "finished") && (
+            <div className="flex justify-center items-center mt-4 mb-2 py-3 bg-gray-50 text-sm font-mono text-gray-600">
+              <div className="flex gap-8">
+                <span className="font-semibold">WPM: {Math.round(wpm)}</span>
+                <span className="font-semibold">Accuracy: {accuracy}%</span>
+                <span className="font-semibold">Time: {fmtTime(elapsedMs)}</span>
+                <span className="font-semibold">Errors: {errors}</span>
+              </div>
+            </div>
+          )}
+          
+          {/* Compact Status */}
+          <div className="flex justify-between items-center mt-3 text-sm text-gray-500">
             <span>
-              {strict ? 'Strict Mode: Incorrect characters blocked' : 'Standard Mode: Type as fast as possible'}
+              {state === "counting" && `Starting in ${count}...`}
+              {state === "running" && "Race in Progress"}
+              {state === "finished" && "Race Completed"}
+              {state === "idle" && (strict ? 'Strict Mode' : 'Standard Mode')}
             </span>
             {text && (
               <span>
-                Progress: {currentWordIndex}/{words.length} words
+                {currentWordIndex}/{words.length} words
               </span>
             )}
           </div>
         </section>
 
         {/* Passage Management */}
-        <section className="mb-16 py-12 bg-gray-50">
-          <h2 className="text-2xl font-bold text-gray-700 mb-8 text-center">
+        <section className="mb-8 py-6 bg-gray-50">
+          <h3 className="text-lg font-bold text-gray-700 mb-4 text-center">
             Passage Library
-          </h2>
+          </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-4">
                 Select Passage
@@ -1048,16 +1192,16 @@ export default function TypeTutorRacerPOC() {
             </div>
           </div>
 
-          <div className="flex justify-center gap-6">
+          <div className="flex justify-center gap-4">
             <button
-              className="px-6 py-3 bg-gray-700 text-white hover:bg-gray-800 font-semibold transition-colors duration-200"
+              className="px-4 py-2 bg-gray-700 text-white hover:bg-gray-800 font-medium text-sm transition-colors duration-200"
               onClick={() => setShowCustomModal(true)}
             >
               Add Custom Text
             </button>
             
             <button 
-              className="px-6 py-3 text-gray-600 hover:text-gray-800 font-semibold transition-colors duration-200" 
+              className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium text-sm transition-colors duration-200" 
               onClick={saveCurrentToLibrary}
               disabled={!text}
             >
@@ -1067,15 +1211,15 @@ export default function TypeTutorRacerPOC() {
         </section>
 
         {/* Performance History */}
-        <section className="py-12 bg-gray-50">
-          <h2 className="text-2xl font-bold text-gray-700 mb-8 text-center">
+        <section className="py-6 bg-gray-50">
+          <h3 className="text-lg font-bold text-gray-700 mb-4 text-center">
             Performance History
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {(stats.history || []).slice(0, 6).map((h) => (
-              <div key={h.id} className="p-8 bg-white">
+              <div key={h.id} className="p-4 bg-white">
                 <div className="font-bold text-lg mb-2 text-gray-700">{h.title}</div>
-                <div className="text-sm text-gray-500 mb-6">
+                <div className="text-sm text-gray-500 mb-4">
                   {new Date(h.date).toLocaleDateString()}
                 </div>
                 <div className="grid grid-cols-3 gap-6 text-center">
@@ -1110,6 +1254,18 @@ export default function TypeTutorRacerPOC() {
               isOpen={showCustomModal}
               onClose={() => setShowCustomModal(false)}
               onSave={handleCustomTextSave}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Settings Modal */}
+        <AnimatePresence>
+          {showSettingsModal && (
+            <SettingsModal
+              isOpen={showSettingsModal}
+              onClose={() => setShowSettingsModal(false)}
+              settings={currentSettings}
+              onSave={handleSettingsSave}
             />
           )}
         </AnimatePresence>
