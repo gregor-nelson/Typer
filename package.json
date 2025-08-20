@@ -1,5 +1,5 @@
 {
-  "name": "type-race",
+  "name": "typer",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,12 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "start": "vite preview",
-    "build:analyze": "vite build --mode analyze",
-    "clean": "rm -rf dist",
-    "deploy:vps": "npm run build && rsync -avz --delete dist/ user@glkn.xyz:/var/www/html/typetest/",
-    "build:vps": "npm run build"
+    "preview": "vite preview"
   },
   "dependencies": {
     "framer-motion": "^12.23.12",

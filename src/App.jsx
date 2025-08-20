@@ -21,46 +21,35 @@ const cleanText = (t, options = {}) => {
   
   let text = t;
   
-  // Basic cleanup
   text = text
-    // Normalize line breaks and whitespace
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')  // Max 2 consecutive line breaks
-    .replace(/[ \t]+/g, ' ')     // Multiple spaces/tabs to single space
-    .replace(/ +\n/g, '\n')      // Remove trailing spaces before line breaks
-    .replace(/\n +/g, '\n')      // Remove leading spaces after line breaks
-    
-    // Normalize punctuation
-    .replace(/[""]/g, '"')       // Smart quotes to straight quotes
-    .replace(/['']/g, "'")       // Smart apostrophes to straight
-    .replace(/…/g, '...')        // Ellipsis to three dots
-    .replace(/—/g, '--')         // Em dash to double dash
-    .replace(/–/g, '-')          // En dash to hyphen
-    
-    // Clean up common copy-paste artifacts
-    .replace(/\u00A0/g, ' ')     // Non-breaking space to regular space
-    .replace(/\u2060/g, '')      // Word joiner (invisible)
-    .replace(/\uFEFF/g, '')      // Zero width no-break space (BOM)
-    
-    // Trim and normalize final spacing
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ +\n/g, '\n')
+    .replace(/\n +/g, '\n')
+    .replace(/[""]/g, '"')
+    .replace(/['']/g, "'")
+    .replace(/…/g, '...')
+    .replace(/—/g, '--')
+    .replace(/–/g, '-')
+    .replace(/\u00A0/g, ' ')
+    .replace(/\u2060/g, '')
+    .replace(/\uFEFF/g, '')
     .trim()
-    .replace(/\s+/g, ' ');       // Final cleanup: any remaining multiple spaces
+    .replace(/\s+/g, ' ');
   
-  // Optional: Remove difficult characters for beginners
   if (options.beginner) {
     text = text
-      .replace(/[-–—]/g, ' ')              // Remove all hyphens and dashes, replace with space
-      .replace(/@/g, ' at ')               // Replace @ with " at "
-      .replace(/[^\w\s.,!?;:'"()]/g, '')   // Keep only basic punctuation
-      .replace(/[{}[\]<>#$%^&*+=|\\\/~`]/g, '') // Remove special symbols
-      .replace(/\s+/g, ' ')                // Clean up multiple spaces from replacements
+      .replace(/[-—–]/g, ' ')
+      .replace(/@/g, ' at ')
+      .replace(/[^\w\s.,!?;:'"()]/g, '')
+      .replace(/[{}[\]<>#$%^&*+=|\\\/~`]/g, '')
+      .replace(/\s+/g, ' ')
       .trim();
   }
   
-  // Optional: Length limiting with smart truncation
   if (options.maxLength && text.length > options.maxLength) {
-    // Find the last complete sentence before the limit
     const truncated = text.slice(0, options.maxLength);
     const lastSentence = truncated.lastIndexOf('.');
     const lastQuestion = truncated.lastIndexOf('?');
@@ -69,10 +58,8 @@ const cleanText = (t, options = {}) => {
     const lastPunctuation = Math.max(lastSentence, lastQuestion, lastExclamation);
     
     if (lastPunctuation > options.maxLength * 0.8) {
-      // If we found a sentence ending in the last 20%, use it
       text = text.slice(0, lastPunctuation + 1).trim();
     } else {
-      // Otherwise, find the last complete word
       const lastSpace = truncated.lastIndexOf(' ');
       text = text.slice(0, lastSpace > 0 ? lastSpace : options.maxLength).trim();
     }
@@ -111,12 +98,11 @@ const BUILT_IN = [
   },
 ];
 
-// Names + colors for AI opponents
+// Professional AI opponent names
 const BOT_NAMES = [
   "Ada", "Turing", "Hedy", "Linus", "Grace", "Kernighan", "Lovelace", "Guido",
   "Marquez", "Curie", "Tesla", "Noether", "Hopper", "Babbage", "Knuth",
 ];
-const hue = () => Math.floor(Math.random() * 360);
 
 // Local storage helpers
 const LS = {
@@ -132,7 +118,7 @@ const loadStats = () => {
 };
 const saveStats = (stats) => localStorage.setItem(LS.STATS, JSON.stringify(stats || { history: [] }));
 
-// --- Custom Text Modal Component ------------------------------------------
+// --- Minimal Custom Text Modal Component ----------------------------------
 function CustomTextModal({ isOpen, onClose, onSave }) {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
@@ -140,7 +126,6 @@ function CustomTextModal({ isOpen, onClose, onSave }) {
   const [maxLength, setMaxLength] = useState(800);
   const textareaRef = useRef(null);
 
-  // Get processed text preview
   const processedText = useMemo(() => {
     return cleanText(text, { 
       beginner: beginnerMode, 
@@ -148,7 +133,6 @@ function CustomTextModal({ isOpen, onClose, onSave }) {
     });
   }, [text, beginnerMode, maxLength]);
 
-  // Auto-generate title from first few words of processed text
   useEffect(() => {
     if (processedText && !title) {
       const words = processedText.trim().split(/\s+/).slice(0, 5);
@@ -156,14 +140,12 @@ function CustomTextModal({ isOpen, onClose, onSave }) {
     }
   }, [processedText, title]);
 
-  // Focus textarea when modal opens
   useEffect(() => {
     if (isOpen && textareaRef.current) {
       textareaRef.current.focus();
     }
   }, [isOpen]);
 
-  // Handle escape key
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -196,80 +178,92 @@ function CustomTextModal({ isOpen, onClose, onSave }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-8">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col"
+        className="bg-white w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl"
+        style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700">
-          <h2 className="text-xl font-bold">✍️ Add Custom Text</h2>
+        <div className="flex items-center justify-between px-12 py-8 bg-gray-50">
+          <h2 className="text-2xl font-bold text-gray-700">Add Custom Text</h2>
           <button
             onClick={handleCancel}
-            className="text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+            className="text-gray-400 hover:text-gray-600 text-3xl leading-none transition-colors duration-200"
+            aria-label="Close modal"
           >
-            ✕
+            ×
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-6 space-y-4 overflow-y-auto">
+        <div className="flex-1 px-12 py-8 space-y-8 overflow-y-auto">
           {/* Title Input */}
           <div>
-            <label className="block text-sm font-medium mb-2">Title</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              Title
+            </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Passage title (auto-generated from text)"
-              className="w-full px-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-0 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              placeholder="Enter a descriptive title for your passage"
+              className="w-full px-0 py-3 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none text-lg transition-colors duration-200"
             />
           </div>
 
           {/* Processing Options */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <label className="block text-sm font-medium mb-2">Max Length</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Maximum Length
+              </label>
               <select
                 value={maxLength}
                 onChange={(e) => setMaxLength(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-0 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-0 py-3 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none text-lg transition-colors duration-200"
               >
-                <option value={400}>Short (400 chars)</option>
-                <option value={800}>Medium (800 chars)</option>
-                <option value={1200}>Long (1200 chars)</option>
-                <option value={2000}>Extra Long (2000 chars)</option>
+                <option value={400}>Short (400 characters)</option>
+                <option value={800}>Medium (800 characters)</option>
+                <option value={1200}>Long (1200 characters)</option>
+                <option value={2000}>Extended (2000 characters)</option>
               </select>
             </div>
             
-            <div>
-              <label className="flex items-center space-x-2 mt-6">
+            <div className="flex flex-col justify-center">
+              <label className="flex items-center space-x-3 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={beginnerMode}
                   onChange={(e) => setBeginnerMode(e.target.checked)}
-                  className="rounded border-zinc-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200"
+                  className="w-5 h-5 text-gray-600"
                 />
-                <span className="text-sm font-medium">Beginner Mode</span>
+                <span className="text-sm font-semibold text-gray-700">
+                  Beginner Mode
+                </span>
               </label>
-              <p className="text-xs text-zinc-500 mt-1">Remove difficult punctuation & symbols</p>
+              <p className="text-sm text-gray-500 mt-2 ml-8">
+                Simplifies punctuation and removes special characters
+              </p>
             </div>
           </div>
 
           {/* Text Area */}
-          <div className="flex-1 flex flex-col">
-            <label className="block text-sm font-medium mb-2">Raw Text Input</label>
+          <div className="space-y-4">
+            <label className="block text-sm font-semibold text-gray-700">
+              Text Content
+            </label>
             <textarea
               ref={textareaRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Paste or type your passage here..."
-              className="min-h-[200px] px-4 py-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-0 focus:ring-2 focus:ring-blue-500 outline-none resize-none transition-all font-mono text-sm"
+              placeholder="Paste or type your passage content here..."
+              className="w-full h-48 px-0 py-4 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none resize-none font-mono text-base leading-relaxed transition-colors duration-200"
             />
             {text && (
-              <div className="text-xs text-zinc-500 mt-2 flex justify-between">
+              <div className="text-sm text-gray-500 flex justify-between pt-4">
                 <span>Original: {text.length} chars • {text.trim().split(/\s+/).length} words</span>
                 <span>Processed: {processedText.length} chars • {processedText.trim().split(/\s+/).length} words</span>
               </div>
@@ -278,9 +272,11 @@ function CustomTextModal({ isOpen, onClose, onSave }) {
 
           {/* Preview */}
           {processedText && (
-            <div>
-              <label className="block text-sm font-medium mb-2">Preview (Processed Text)</label>
-              <div className="max-h-32 overflow-y-auto px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 text-sm font-mono leading-relaxed">
+            <div className="space-y-4">
+              <label className="block text-sm font-semibold text-gray-700">
+                Preview
+              </label>
+              <div className="max-h-32 overflow-y-auto p-4 bg-gray-50 text-base font-mono leading-relaxed">
                 {processedText}
               </div>
             </div>
@@ -288,356 +284,131 @@ function CustomTextModal({ isOpen, onClose, onSave }) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-zinc-200 dark:border-zinc-700">
+        <div className="flex items-center justify-end gap-4 px-12 py-8 bg-gray-50">
           <button
             onClick={handleCancel}
-            className="px-6 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors"
+            className="px-6 py-3 text-gray-600 hover:text-gray-800 font-semibold transition-colors duration-200"
           >
             Cancel
           </button>
-          <motion.button
+          <button
             onClick={handleSave}
             disabled={!processedText.trim()}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="px-6 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors duration-200"
           >
             Save & Use
-          </motion.button>
+          </button>
         </div>
       </motion.div>
     </div>
   );
 }
 
-// --- Enhanced 2D RaceTrack Component ---------------------------------------
-function RaceTrack({ racers, isRacing, state, textLength }) {
+// --- Minimal Progress Visualization ---------------------------------------
+function ProgressVisualization({ racers, isRacing, state, textLength }) {
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
-  const cameraRef = useRef({ x: 0, targetX: 0 });
-  const sparklesRef = useRef([]);
   
-  const TRACK_LENGTH = 1200;
-  const LANE_HEIGHT = 85;
-  const CAR_WIDTH = 50;
-  const CAR_HEIGHT = 28;
-  
-  // Enhanced car drawing with modern styling
-  const drawCar = useCallback((ctx, x, y, color, isPlayer = false, racer = null) => {
-    ctx.save();
-    ctx.translate(x, y);
+  const drawVisualization = useCallback((ctx, canvas) => {
+    const { width, height } = canvas;
     
-    // Car shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-    ctx.fillRect(-CAR_WIDTH/2 + 2, -CAR_HEIGHT/2 + 2, CAR_WIDTH, CAR_HEIGHT);
+    // Clean background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
     
-    // Main car body with gradient
-    const gradient = ctx.createLinearGradient(0, -CAR_HEIGHT/2, 0, CAR_HEIGHT/2);
-    if (isPlayer) {
-      gradient.addColorStop(0, '#3b82f6');
-      gradient.addColorStop(0.5, '#1d4ed8');
-      gradient.addColorStop(1, '#1e40af');
-    } else {
-      const h = racer?.hue || 0;
-      gradient.addColorStop(0, `hsl(${h}, 70%, 65%)`);
-      gradient.addColorStop(0.5, `hsl(${h}, 80%, 55%)`);
-      gradient.addColorStop(1, `hsl(${h}, 85%, 45%)`);
-    }
+    // Header area
+    const headerHeight = 40;
+    ctx.fillStyle = '#f9fafb';
+    ctx.fillRect(0, 0, width, headerHeight);
     
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.roundRect(-CAR_WIDTH/2, -CAR_HEIGHT/2, CAR_WIDTH, CAR_HEIGHT, 8);
-    ctx.fill();
-    
-    // Car outline
-    ctx.strokeStyle = isPlayer ? '#1e40af' : `hsl(${racer?.hue || 0}, 90%, 35%)`;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    
-    // Windshield with realistic glass effect
-    const windshieldGradient = ctx.createLinearGradient(0, -CAR_HEIGHT/2, 0, 0);
-    windshieldGradient.addColorStop(0, 'rgba(135,206,250,0.9)');
-    windshieldGradient.addColorStop(1, 'rgba(135,206,250,0.4)');
-    ctx.fillStyle = windshieldGradient;
-    ctx.beginPath();
-    ctx.roundRect(-CAR_WIDTH/2 + 8, -CAR_HEIGHT/2 + 3, CAR_WIDTH - 16, 12, 4);
-    ctx.fill();
-    
-    // Headlights
-    ctx.fillStyle = '#fef3c7';
-    ctx.beginPath();
-    ctx.ellipse(CAR_WIDTH/2 - 3, -6, 3, 2, 0, 0, Math.PI * 2);
-    ctx.ellipse(CAR_WIDTH/2 - 3, 6, 3, 2, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Wheels with rim details
-    const wheelGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 6);
-    wheelGradient.addColorStop(0, '#4b5563');
-    wheelGradient.addColorStop(0.7, '#374151');
-    wheelGradient.addColorStop(1, '#1f2937');
-    
-    ctx.fillStyle = wheelGradient;
-    ctx.beginPath();
-    ctx.arc(-CAR_WIDTH/3, CAR_HEIGHT/2 + 4, 6, 0, Math.PI * 2);
-    ctx.arc(CAR_WIDTH/3, CAR_HEIGHT/2 + 4, 6, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Wheel rims
-    ctx.strokeStyle = '#9ca3af';
+    // Subtle header divider
+    ctx.strokeStyle = '#f3f4f6';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(-CAR_WIDTH/3, CAR_HEIGHT/2 + 4, 4, 0, Math.PI * 2);
-    ctx.arc(CAR_WIDTH/3, CAR_HEIGHT/2 + 4, 4, 0, Math.PI * 2);
+    ctx.moveTo(0, headerHeight);
+    ctx.lineTo(width, headerHeight);
     ctx.stroke();
     
-    // Player crown
-    if (isPlayer) {
-      ctx.fillStyle = '#fbbf24';
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(-10, -CAR_HEIGHT/2 - 8);
-      ctx.lineTo(-6, -CAR_HEIGHT/2 - 16);
-      ctx.lineTo(-2, -CAR_HEIGHT/2 - 12);
-      ctx.lineTo(2, -CAR_HEIGHT/2 - 16);
-      ctx.lineTo(6, -CAR_HEIGHT/2 - 12);
-      ctx.lineTo(10, -CAR_HEIGHT/2 - 16);
-      ctx.lineTo(10, -CAR_HEIGHT/2 - 6);
-      ctx.lineTo(-10, -CAR_HEIGHT/2 - 6);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-    }
+    // Progress area
+    const progressY = headerHeight;
+    const progressHeight = height - headerHeight;
+    const rowHeight = Math.max(50, progressHeight / racers.length);
     
-    // Speed effect lines for moving cars
-    if (isRacing && racer?.wpm > 0) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-      ctx.lineWidth = 1;
-      for (let i = 0; i < 3; i++) {
-        const offset = (Date.now() * 0.01 + i * 10) % 20 - 10;
+    ctx.font = '13px system-ui';
+    ctx.fillStyle = '#374151';
+    
+    racers.forEach((racer, index) => {
+      const y = progressY + index * rowHeight;
+      
+      // Alternating row background
+      if (index % 2 === 0) {
+        ctx.fillStyle = '#fafafa';
+        ctx.fillRect(0, y, width, rowHeight);
+      }
+      
+      // Subtle row divider (only between rows)
+      if (index > 0) {
+        ctx.strokeStyle = '#f5f5f5';
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(-CAR_WIDTH/2 - 15 + offset, -8 + i * 8);
-        ctx.lineTo(-CAR_WIDTH/2 - 5 + offset, -8 + i * 8);
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
         ctx.stroke();
       }
-    }
-    
-    ctx.restore();
-  }, []);
-  
-  const drawTrack = useCallback((ctx, canvas) => {
-    const { width, height } = canvas;
-    const camera = cameraRef.current;
-    
-    // Sky gradient background
-    const skyGradient = ctx.createLinearGradient(0, 0, 0, height);
-    skyGradient.addColorStop(0, '#87ceeb');
-    skyGradient.addColorStop(1, '#98fb98');
-    ctx.fillStyle = skyGradient;
-    ctx.fillRect(0, 0, width, height);
-    
-    // Grass texture
-    ctx.fillStyle = '#22c55e';
-    ctx.fillRect(0, 0, width, height);
-    
-    // Add grass pattern
-    ctx.fillStyle = '#16a34a';
-    for (let x = 0; x < width + camera.x; x += 20) {
-      for (let y = 0; y < height; y += 15) {
-        if (Math.random() > 0.7) {
-          ctx.fillRect(x - camera.x, y, 2, 8);
-        }
-      }
-    }
-    
-    // Track setup
-    const trackY = height / 2 - (racers.length * LANE_HEIGHT) / 2;
-    const trackHeight = racers.length * LANE_HEIGHT;
-    
-    // Track surface with realistic asphalt texture
-    const trackGradient = ctx.createLinearGradient(0, trackY, 0, trackY + trackHeight);
-    trackGradient.addColorStop(0, '#4b5563');
-    trackGradient.addColorStop(0.5, '#374151');
-    trackGradient.addColorStop(1, '#4b5563');
-    ctx.fillStyle = trackGradient;
-    ctx.fillRect(-camera.x, trackY, TRACK_LENGTH + camera.x + width, trackHeight);
-    
-    // Asphalt texture
-    ctx.fillStyle = 'rgba(0,0,0,0.1)';
-    for (let x = -camera.x; x < TRACK_LENGTH + width; x += 8) {
-      for (let y = trackY; y < trackY + trackHeight; y += 6) {
-        if (Math.random() > 0.8) {
-          ctx.fillRect(x, y, 1, 1);
-        }
-      }
-    }
-    
-    // Lane dividers with proper dashed lines
-    ctx.strokeStyle = '#fbbf24';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([15, 10]);
-    for (let i = 1; i < racers.length; i++) {
-      const y = trackY + i * LANE_HEIGHT;
-      ctx.beginPath();
-      ctx.moveTo(-camera.x, y);
-      ctx.lineTo(TRACK_LENGTH + width, y);
-      ctx.stroke();
-    }
-    ctx.setLineDash([]);
-    
-    // Track borders with curb effect
-    ctx.strokeStyle = '#dc2626';
-    ctx.lineWidth = 8;
-    ctx.beginPath();
-    ctx.moveTo(-camera.x, trackY);
-    ctx.lineTo(TRACK_LENGTH + width, trackY);
-    ctx.moveTo(-camera.x, trackY + trackHeight);
-    ctx.lineTo(TRACK_LENGTH + width, trackY + trackHeight);
-    ctx.stroke();
-    
-    // White border lines
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-camera.x, trackY - 4);
-    ctx.lineTo(TRACK_LENGTH + width, trackY - 4);
-    ctx.moveTo(-camera.x, trackY + trackHeight + 4);
-    ctx.lineTo(TRACK_LENGTH + width, trackY + trackHeight + 4);
-    ctx.stroke();
-    
-    // Start line with modern styling
-    const startX = 80;
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(startX - camera.x, trackY - 10, 6, trackHeight + 20);
-    
-    // Start line decoration
-    ctx.fillStyle = '#ef4444';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('START', startX - camera.x, trackY - 20);
-    
-    // Finish line with checkered flag pattern
-    const finishX = TRACK_LENGTH - 80;
-    const checkerSize = 8;
-    for (let y = 0; y < trackHeight + 20; y += checkerSize) {
-      for (let x = 0; x < 20; x += checkerSize) {
-        const isBlack = (Math.floor(y / checkerSize) + Math.floor(x / checkerSize)) % 2 === 0;
-        ctx.fillStyle = isBlack ? '#000000' : '#ffffff';
-        ctx.fillRect(finishX - camera.x + x, trackY - 10 + y, checkerSize, checkerSize);
-      }
-    }
-    
-    // Finish line decoration
-    ctx.fillStyle = '#22c55e';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('FINISH', finishX - camera.x, trackY - 20);
-    
-    // Progress markers
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.font = '12px sans-serif';
-    for (let i = 1; i < 4; i++) {
-      const markerX = (TRACK_LENGTH * i / 4) - camera.x;
-      ctx.fillText(`${i * 25}%`, markerX, trackY - 25);
-      ctx.fillRect(markerX - 1, trackY, 2, trackHeight);
-    }
-    
-  }, [racers.length]);
-  
-  // Sparkles and celebration effects
-  const updateSparkles = useCallback(() => {
-    const finishedRacers = racers.filter(r => textLength > 0 && r.progress >= textLength);
-    
-    finishedRacers.forEach((racer, index) => {
-      const laneY = (canvasRef.current?.height || 400) / 2 - (racers.length * LANE_HEIGHT) / 2 + index * LANE_HEIGHT + LANE_HEIGHT / 2;
-      const x = TRACK_LENGTH - 80;
       
-      // Add new sparkles
-      if (Math.random() > 0.8) {
-        sparklesRef.current.push({
-          x: x + (Math.random() - 0.5) * 60,
-          y: laneY + (Math.random() - 0.5) * 40,
-          vx: (Math.random() - 0.5) * 4,
-          vy: (Math.random() - 0.5) * 4,
-          life: 1,
-          hue: racer.hue,
-          size: Math.random() * 4 + 2
-        });
-      }
+      // Name and stats
+      ctx.fillStyle = racer.isPlayer ? '#1f2937' : '#6b7280';
+      ctx.font = 'bold 14px system-ui';
+      ctx.fillText(racer.name, 20, y + rowHeight/2 - 6);
+      
+      ctx.font = '12px system-ui';
+      ctx.fillStyle = '#9ca3af';
+      ctx.fillText(`${Math.round(racer.wpm)} WPM`, 20, y + rowHeight/2 + 10);
+      
+      // Progress bar
+      const barX = 120;
+      const barWidth = width - 180;
+      const barHeight = 6;
+      const barY = y + (rowHeight - barHeight) / 2;
+      
+      // Progress bar background
+      ctx.fillStyle = '#f3f4f6';
+      ctx.fillRect(barX, barY, barWidth, barHeight);
+      
+      // Progress bar fill
+      const progress = textLength > 0 ? Math.min(1, racer.progress / textLength) : 0;
+      const fillWidth = barWidth * progress;
+      
+      ctx.fillStyle = racer.isPlayer ? '#374151' : '#9ca3af';
+      ctx.fillRect(barX, barY, fillWidth, barHeight);
+      
+      // Progress percentage
+      ctx.fillStyle = '#6b7280';
+      ctx.font = '11px system-ui';
+      const percentage = Math.round(progress * 100);
+      ctx.fillText(`${percentage}%`, width - 40, y + rowHeight/2 + 3);
     });
     
-    // Update existing sparkles
-    sparklesRef.current = sparklesRef.current.filter(sparkle => {
-      sparkle.x += sparkle.vx;
-      sparkle.y += sparkle.vy;
-      sparkle.life -= 0.02;
-      return sparkle.life > 0;
-    }).slice(-50); // Limit sparkles
+    // Header labels
+    ctx.fillStyle = '#6b7280';
+    ctx.font = 'bold 12px system-ui';
+    ctx.fillText('Participant', 20, 25);
+    ctx.fillText('Progress', 120, 25);
+    ctx.fillText('Complete', width - 65, 25);
+    
   }, [racers, textLength]);
-  
-  const drawSparkles = useCallback((ctx, camera) => {
-    sparklesRef.current.forEach(sparkle => {
-      ctx.save();
-      ctx.globalAlpha = sparkle.life;
-      ctx.fillStyle = `hsl(${sparkle.hue}, 80%, 60%)`;
-      ctx.beginPath();
-      ctx.arc(sparkle.x - camera.x, sparkle.y, sparkle.size, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    });
-  }, []);
   
   const animate = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
-    const { width, height } = canvas;
-    
-    // Update camera to follow leader
-    const leader = racers.reduce((prev, curr) => 
-      (curr.progress > prev.progress) ? curr : prev, racers[0] || { progress: 0 });
-    
-    if (leader && textLength > 0) {
-      const leaderProgress = leader.progress / textLength;
-      const targetX = Math.max(0, Math.min(TRACK_LENGTH - width + 100, (leaderProgress * TRACK_LENGTH) - width/2));
-      cameraRef.current.targetX = targetX;
-      cameraRef.current.x = lerp(cameraRef.current.x, cameraRef.current.targetX, 0.08);
-    }
-    
-    drawTrack(ctx, canvas);
-    
-    // Draw racers
-    const trackY = height / 2 - (racers.length * LANE_HEIGHT) / 2;
-    racers.forEach((racer, index) => {
-      const laneY = trackY + index * LANE_HEIGHT + LANE_HEIGHT / 2;
-      const progress = textLength > 0 ? racer.progress / textLength : 0;
-      const x = 80 + (progress * (TRACK_LENGTH - 160));
-      
-      drawCar(ctx, x - cameraRef.current.x, laneY, null, racer.isPlayer, racer);
-      
-      // Racer nameplate with modern styling
-      ctx.save();
-      ctx.fillStyle = 'rgba(0,0,0,0.8)';
-      ctx.fillRect(x - cameraRef.current.x - 30, laneY - 50, 60, 20);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(racer.name, x - cameraRef.current.x, laneY - 37);
-      ctx.font = '9px sans-serif';
-      ctx.fillStyle = '#fbbf24';
-      ctx.fillText(`${Math.round(racer.wpm)} WPM`, x - cameraRef.current.x, laneY - 26);
-      ctx.restore();
-    });
-    
-    // Update and draw celebration effects
-    updateSparkles();
-    drawSparkles(ctx, cameraRef.current);
+    drawVisualization(ctx, canvas);
     
     if (isRacing || state === "finished") {
       animationRef.current = requestAnimationFrame(animate);
     }
-  }, [racers, isRacing, state, textLength, drawTrack, drawCar, updateSparkles, drawSparkles]);
+  }, [racers, isRacing, state, drawVisualization]);
   
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -652,9 +423,7 @@ function RaceTrack({ racers, isRacing, state, textLength }) {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     
-    if (isRacing || state === "finished") {
-      animate();
-    }
+    animate();
     
     return () => {
       window.removeEventListener('resize', resizeCanvas);
@@ -662,14 +431,43 @@ function RaceTrack({ racers, isRacing, state, textLength }) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isRacing, state, animate]);
+  }, [animate]);
   
   return (
     <canvas
       ref={canvasRef}
-      className="w-full rounded-2xl shadow-lg border border-zinc-200 dark:border-zinc-700"
-      style={{ height: Math.max(320, racers.length * 85 + 100) }}
+      className="w-full bg-white"
+      style={{ height: Math.max(180, racers.length * 55 + 45) }}
+      role="img"
+      aria-label="Race progress visualization"
     />
+  );
+}
+
+// --- Performance Metrics Component ----------------------------------------
+function PerformanceMetrics({ wpm, accuracy, errors, elapsedMs, state }) {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-8">
+      <div className="text-center">
+        <div className="text-5xl font-bold text-gray-700 mb-2">{Math.round(wpm)}</div>
+        <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Words per Minute</div>
+      </div>
+      
+      <div className="text-center">
+        <div className="text-5xl font-bold text-gray-700 mb-2">{accuracy}%</div>
+        <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Accuracy</div>
+      </div>
+      
+      <div className="text-center">
+        <div className="text-5xl font-bold text-gray-700 mb-2">{errors}</div>
+        <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Errors</div>
+      </div>
+      
+      <div className="text-center">
+        <div className="text-5xl font-bold text-gray-700 mb-2">{fmtTime(elapsedMs)}</div>
+        <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Time Elapsed</div>
+      </div>
+    </div>
   );
 }
 
@@ -678,7 +476,7 @@ export default function TypeTutorRacerPOC() {
   const [library, setLibrary] = useState(() => loadLib());
   const [selectedBuiltIn, setSelectedBuiltIn] = useState(BUILT_IN[0].id);
   const [customText, setCustomText] = useState("");
-  const [sourceTitle, setSourceTitle] = useState("Built‑in passage");
+  const [sourceTitle, setSourceTitle] = useState("Built-in passage");
 
   // Race settings
   const [numBots, setNumBots] = useState(2);
@@ -704,7 +502,7 @@ export default function TypeTutorRacerPOC() {
   const [count, setCount] = useState(countdown);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [currentTypedWord, setCurrentTypedWord] = useState("");
-  const [wordResults, setWordResults] = useState([]); // {word, typed, correct, timestamp}
+  const [wordResults, setWordResults] = useState([]);
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
   const [bots, setBots] = useState([]);
@@ -717,30 +515,23 @@ export default function TypeTutorRacerPOC() {
     return text.split(/\s+/).filter(word => word.length > 0);
   }, [text]);
 
-  // Calculate progress and stats based on word completion
+  // Calculate progress and stats
   const correctWords = useMemo(() => {
     return wordResults.filter(result => result.correct).length;
   }, [wordResults]);
 
-  const totalTypedChars = useMemo(() => {
-    return wordResults.reduce((total, result) => {
-      return total + result.word.length + 1; // +1 for space
-    }, 0) + currentTypedWord.length;
-  }, [wordResults, currentTypedWord]);
-
   const correctChars = useMemo(() => {
     const completedCorrectChars = wordResults
       .filter(result => result.correct)
-      .reduce((total, result) => total + result.word.length + 1, 0); // +1 for space
+      .reduce((total, result) => total + result.word.length + 1, 0);
     
-    // Add partial progress for current word if it's being typed correctly
     const currentWord = words[currentWordIndex] || "";
     let currentCorrectChars = 0;
     for (let i = 0; i < Math.min(currentTypedWord.length, currentWord.length); i++) {
       if (currentTypedWord[i] === currentWord[i]) {
         currentCorrectChars++;
       } else {
-        break; // Stop at first mistake
+        break;
       }
     }
     
@@ -759,12 +550,11 @@ export default function TypeTutorRacerPOC() {
   const elapsedMs = endTime ? endTime - startTime : (startTime ? ms() - startTime : 0);
   const wpm = calcWPM(correctChars, elapsedMs);
 
-  // Create racers array for track visualization
+  // Create racers array for visualization
   const racers = useMemo(() => {
     const playerRacer = {
       id: 'player',
       name: 'You',
-      hue: 200,
       wpm: wpm,
       progress: correctChars,
       isPlayer: true
@@ -778,7 +568,7 @@ export default function TypeTutorRacerPOC() {
     return [playerRacer, ...botRacers];
   }, [wpm, correctChars, bots]);
 
-  // Focus input when race starts
+  // Focus management
   useEffect(() => {
     if (state === "running" && inputRef.current) inputRef.current.focus();
   }, [state]);
@@ -801,11 +591,10 @@ export default function TypeTutorRacerPOC() {
     return () => clearInterval(id);
   }, [state, countdown]);
 
-  // Bot tick
+  // Bot simulation
   useEffect(() => {
     if (state !== "running") return;
-    const t0 = ms();
-    let last = t0;
+    let last = ms();
     const id = setInterval(() => {
       const now = ms();
       const dt = (now - last) / 1000;
@@ -843,11 +632,9 @@ export default function TypeTutorRacerPOC() {
     };
     const [min, max] = ranges[profile] || [50, 70];
     const makeBot = () => {
-      const h = hue();
       return {
         id: uid(),
         name: sample(BOT_NAMES),
-        hue: h,
         wpm: Math.round(min + Math.random() * (max - min)),
         progress: 0,
       };
@@ -901,20 +688,17 @@ export default function TypeTutorRacerPOC() {
     setState("idle");
   };
 
-  // Input handler with word-based matching
+  // Input handler
   const onType = (e) => {
     const value = e.target.value;
     
-    // Start timer on first keystroke
     if (!startTime && state === "running") setStartTime(ms());
     
-    // Check if user pressed space (word completion)
     if (value.endsWith(' ') || value.endsWith('\t')) {
-      const typedWord = value.slice(0, -1).trim(); // Remove space/tab and trim
+      const typedWord = value.slice(0, -1).trim();
       const targetWord = words[currentWordIndex];
       
       if (targetWord) {
-        // Record the word result
         const isCorrect = typedWord === targetWord;
         const result = {
           word: targetWord,
@@ -927,10 +711,8 @@ export default function TypeTutorRacerPOC() {
         setCurrentWordIndex(prev => prev + 1);
         setCurrentTypedWord("");
         
-        // Clear input for next word
         e.target.value = "";
         
-        // Check if race is complete
         if (currentWordIndex + 1 >= words.length) {
           setEndTime(ms());
           setState("finished");
@@ -938,10 +720,8 @@ export default function TypeTutorRacerPOC() {
         }
       }
     } else {
-      // Update current word being typed
       setCurrentTypedWord(value);
       
-      // In strict mode, prevent typing if current character is wrong
       if (strict) {
         const currentWord = words[currentWordIndex] || "";
         if (value.length > 0) {
@@ -949,7 +729,6 @@ export default function TypeTutorRacerPOC() {
           const expectedChar = currentWord[value.length - 1];
           
           if (lastChar !== expectedChar) {
-            // Don't allow the wrong character
             e.target.value = value.slice(0, -1);
             setCurrentTypedWord(value.slice(0, -1));
             return;
@@ -959,7 +738,7 @@ export default function TypeTutorRacerPOC() {
     }
   };
 
-  // Upload handlers
+  // File upload
   const onUpload = async (file) => {
     if (!file) return;
     const reader = new FileReader();
@@ -971,6 +750,7 @@ export default function TypeTutorRacerPOC() {
     reader.readAsText(file);
   };
 
+  // Library management
   const saveCurrentToLibrary = () => {
     const title = prompt("Save this passage as:", sourceTitle || "Custom passage");
     if (!title) return;
@@ -979,28 +759,13 @@ export default function TypeTutorRacerPOC() {
     const updated = [entry, ...lib].slice(0, 50);
     saveLib(updated);
     setLibrary(updated);
-    alert("Saved to your library.");
+    alert("Passage saved to library.");
   };
 
-  const loadFromLibrary = (id) => {
-    const item = library.find((x) => x.id === id);
-    if (!item) return;
-    setCustomText(item.text);
-    setSourceTitle(item.title);
-  };
-
-  const removeFromLibrary = (id) => {
-    const updated = (library || []).filter((x) => x.id !== id);
-    saveLib(updated);
-    setLibrary(updated);
-  };
-
-  // Handle custom text from modal
   const handleCustomTextSave = (title, text) => {
     setCustomText(text);
     setSourceTitle(title);
     
-    // Also save to library for future use
     const lib = loadLib();
     const entry = { id: uid(), title, text };
     const updated = [entry, ...lib].slice(0, 50);
@@ -1008,31 +773,33 @@ export default function TypeTutorRacerPOC() {
     setLibrary(updated);
   };
 
-  // Render text with highlighting
+  // Text rendering
   const renderText = () => {
     if (!text) return (
-      <div className="rounded-2xl p-6 bg-white/90 dark:bg-zinc-900/90 shadow-inner leading-loose text-lg text-zinc-800 dark:text-zinc-100 font-mono">
-        <span className="opacity-50">Select or upload a passage to begin racing...</span>
+      <div className="p-12 bg-gray-50 font-mono text-gray-500 leading-relaxed text-lg min-h-[200px] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-xl font-bold mb-2 text-gray-600">No Passage Selected</div>
+          <div>Choose a built-in passage or upload your own text to begin</div>
+        </div>
       </div>
     );
 
     return (
-      <div className="rounded-2xl p-6 bg-white/90 dark:bg-zinc-900/90 shadow-inner leading-loose text-lg text-zinc-800 dark:text-zinc-100 font-mono break-words overflow-wrap-anywhere">
+      <div className="p-12 bg-white font-mono text-gray-800 leading-relaxed text-lg min-h-[200px]">
         {words.map((word, wordIndex) => {
           const isCompleted = wordIndex < currentWordIndex;
           const isCurrent = wordIndex === currentWordIndex;
           const wordResult = wordResults[wordIndex];
           
-          let wordClass = "transition-all duration-150 mr-2";
+          let wordClass = "mr-2 px-1 py-0.5 transition-all duration-150";
           
           if (isCompleted) {
             wordClass += wordResult?.correct 
-              ? " text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-1 rounded" 
-              : " text-red-600 bg-red-100 dark:bg-red-900/30 px-1 rounded";
+              ? " text-gray-600 bg-gray-100" 
+              : " text-red-600 bg-red-50";
           } else if (isCurrent) {
-            wordClass += " bg-blue-200 dark:bg-blue-500/40 px-1 rounded";
+            wordClass += " bg-gray-200";
             
-            // Show character-by-character progress for current word
             return (
               <span key={wordIndex} className={wordClass}>
                 {word.split("").map((char, charIndex) => {
@@ -1040,17 +807,17 @@ export default function TypeTutorRacerPOC() {
                   const isCorrect = isTyped && currentTypedWord[charIndex] === char;
                   const isWrong = isTyped && currentTypedWord[charIndex] !== char;
                   
-                  let charClass = "";
-                  if (isCorrect) charClass = "text-emerald-600";
-                  else if (isWrong) charClass = "text-red-600 bg-red-200 dark:bg-red-800";
-                  else if (charIndex === currentTypedWord.length) charClass = "animate-pulse bg-blue-300 dark:bg-blue-600";
+                  let charClass = "transition-colors duration-100";
+                  if (isCorrect) charClass += " text-gray-600";
+                  else if (isWrong) charClass += " text-red-600 bg-red-200";
+                  else if (charIndex === currentTypedWord.length) charClass += " bg-gray-600 text-white";
                   
                   return <span key={charIndex} className={charClass}>{char}</span>;
                 })}
               </span>
             );
           } else {
-            wordClass += " opacity-60";
+            wordClass += " text-gray-400";
           }
           
           return <span key={wordIndex} className={wordClass}>{word}</span>;
@@ -1062,236 +829,279 @@ export default function TypeTutorRacerPOC() {
   const stats = loadStats();
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-sky-50 via-white to-violet-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-slate-900 text-zinc-900 dark:text-zinc-100">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+    <div 
+      className="min-h-screen w-full bg-white text-gray-800"
+      style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+    >
+      <div className="max-w-6xl mx-auto px-8 py-12">
         
         {/* Header */}
-        <header className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+        <header className="text-center mb-16">
+          <h1 className="text-5xl font-bold text-gray-700 mb-4">
             TypeTutor Racer
           </h1>
-          <p className="text-lg opacity-75">Learn while you type • Race against AI • Improve your speed</p>
+          <div className="w-24 h-0.5 bg-gray-300 mx-auto mb-6"></div>
+          <p className="text-xl text-gray-600 font-medium">
+            Professional Typing Training System
+          </p>
         </header>
 
-        {/* Race Setup Controls - Above the Canvas */}
-        <div className="rounded-3xl p-6 bg-white/80 dark:bg-zinc-900/70 shadow-xl mb-6">
-          <div className="flex flex-wrap items-center gap-6 justify-between">
-            
-            {/* Left Side - Race Controls */}
-            <div className="flex flex-wrap items-center gap-6">
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-medium">AI Racers:</label>
-                <span className="text-lg font-bold text-blue-600 min-w-[2ch]">{numBots}</span>
+        {/* Race Status */}
+        <div className="text-center mb-16 py-12 bg-gray-50">
+          <div className="text-3xl font-bold text-gray-700 mb-2">
+            {state === "counting" && `Starting in ${count}...`}
+            {state === "running" && "Race in Progress"}
+            {state === "finished" && "Race Completed"}
+            {state === "idle" && "Ready to Start"}
+          </div>
+          {(state === "running" || state === "finished") && (
+            <PerformanceMetrics 
+              wpm={wpm} 
+              accuracy={accuracy} 
+              errors={errors} 
+              elapsedMs={elapsedMs} 
+              state={state} 
+            />
+          )}
+        </div>
+
+        {/* Race Configuration */}
+        <section className="mb-16 py-12 bg-gray-50">
+          <h2 className="text-2xl font-bold text-gray-700 mb-8 text-center">
+            Race Configuration
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-4xl mx-auto">
+            <div className="text-center">
+              <label className="block text-sm font-semibold text-gray-700 mb-4">
+                AI Opponents
+              </label>
+              <div className="flex items-center justify-center gap-4">
+                <span className="text-3xl font-bold text-gray-700">{numBots}</span>
                 <input 
                   type="range" 
                   min={0} 
                   max={5} 
                   value={numBots} 
                   onChange={(e) => setNumBots(Number(e.target.value))}
-                  className="w-20 accent-blue-600"
+                  className="flex-1 max-w-24"
                 />
               </div>
-              
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-medium">Difficulty:</label>
-                <select 
-                  className="px-3 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-0 font-medium text-sm" 
-                  value={profile} 
-                  onChange={(e) => setProfile(e.target.value)}
-                >
-                  <option value="chill">🐌 Chill</option>
-                  <option value="balanced">⚖️ Balanced</option>
-                  <option value="speedy">🚀 Speedy</option>
-                </select>
-              </div>
+            </div>
+            
+            <div className="text-center">
+              <label className="block text-sm font-semibold text-gray-700 mb-4">
+                Difficulty Level
+              </label>
+              <select 
+                className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none text-lg text-center" 
+                value={profile} 
+                onChange={(e) => setProfile(e.target.value)}
+              >
+                <option value="chill">Beginner</option>
+                <option value="balanced">Intermediate</option>
+                <option value="speedy">Advanced</option>
+              </select>
+            </div>
 
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">Strict:</label>
+            <div className="text-center">
+              <label className="block text-sm font-semibold text-gray-700 mb-4">
+                Strict Mode
+              </label>
+              <label className="flex items-center justify-center space-x-3 cursor-pointer">
                 <input 
                   type="checkbox" 
                   checked={strict} 
                   onChange={(e) => setStrict(e.target.checked)}
-                  className="scale-125 accent-blue-600"
+                  className="w-5 h-5"
                 />
-              </div>
-            </div>
-
-            {/* Center - Race Status */}
-            <div className="text-center">
-              <div className="text-sm font-medium px-4 py-2 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/50 dark:to-purple-900/50">
-                {state === "counting" && `Starting in ${count}...`}
-                {state === "running" && "🏃‍♂️ Racing!"}
-                {state === "finished" && "🏆 Finished!"}
-                {state === "idle" && "⏳ Ready to race"}
-              </div>
-            </div>
-
-            {/* Right Side - Action Buttons */}
-            <div className="flex gap-3">
-              <motion.button 
-                onClick={startRace}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold shadow-lg hover:shadow-xl transition-all"
-              >
-                {state === "running" ? "🔄 Restart" : "🏁 Start Race"}
-              </motion.button>
-              
-              <button 
-                onClick={resetRace}
-                className="px-4 py-3 rounded-2xl bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition-colors"
-              >
-                Reset
-              </button>
+                <span className="text-lg">
+                  {strict ? 'Enabled' : 'Disabled'}
+                </span>
+              </label>
             </div>
           </div>
-        </div>
 
-        {/* Main Race Interface */}
-        <div className="space-y-6">
-          
-          {/* Full Width Race Canvas */}
-          <div className="w-full space-y-6">
+          <div className="flex justify-center gap-6 mt-12">
+            <button 
+              onClick={startRace}
+              disabled={!text}
+              className="px-8 py-4 bg-gray-700 text-white font-semibold text-lg hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {state === "running" ? "Restart Race" : "Start Race"}
+            </button>
             
-            {/* Race Track */}
-            <div className="rounded-3xl p-6 bg-white/80 dark:bg-zinc-900/70 shadow-xl">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-xl">🏁 Race Track</h2>
-                <div className="text-sm font-medium px-3 py-1 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/50 dark:to-purple-900/50">
-                  {state === "counting" && `Starting in ${count}...`}
-                  {state === "running" && "🏃‍♂️ Racing!"}
-                  {state === "finished" && "🏆 Finished!"}
-                  {state === "idle" && "⏳ Ready to race"}
-                </div>
-              </div>
-              
-              <RaceTrack 
-                racers={racers} 
-                isRacing={state === "running"} 
-                state={state}
-                textLength={text.length}
-              />
-            </div>
+            <button 
+              onClick={resetRace}
+              className="px-6 py-4 text-gray-600 hover:text-gray-800 font-semibold text-lg transition-colors duration-200"
+            >
+              Reset
+            </button>
+          </div>
+        </section>
 
-            {/* Text and Input */}
-            <div className="rounded-3xl p-6 bg-white/80 dark:bg-zinc-900/70 shadow-xl">
-              <div className="mb-4 max-w-full overflow-hidden">
-                <h3 className="font-bold text-lg mb-2">Type the passage below:</h3>
-                {renderText()}
-              </div>
-              
+        {/* Progress Visualization */}
+        <section className="mb-16">
+          <h2 className="text-2xl font-bold text-gray-700 mb-8 text-center">
+            Race Progress
+          </h2>
+          <div className="bg-gray-50 p-1">
+            <ProgressVisualization 
+              racers={racers} 
+              isRacing={state === "running"} 
+              state={state}
+              textLength={text.length}
+            />
+          </div>
+        </section>
+
+        {/* Typing Area */}
+        <section className="mb-16">
+          <h2 className="text-2xl font-bold text-gray-700 mb-8 text-center">
+            Typing Area
+          </h2>
+          
+          <div className="mb-8 bg-gray-50 overflow-hidden">
+            {renderText()}
+          </div>
+          
+          <input
+            ref={inputRef}
+            disabled={state !== "running"}
+            value={currentTypedWord}
+            onChange={onType}
+            placeholder={state === "running" ? "Start typing here..." : "Click 'Start Race' to begin"}
+            className="w-full px-6 py-6 bg-gray-50 border-0 outline-none text-xl font-mono disabled:opacity-50 transition-colors duration-200"
+            aria-label="Type the displayed passage here"
+          />
+          
+          <div className="flex justify-between items-center mt-6 text-sm text-gray-500">
+            <span>
+              {strict ? 'Strict Mode: Incorrect characters blocked' : 'Standard Mode: Type as fast as possible'}
+            </span>
+            {text && (
+              <span>
+                Progress: {currentWordIndex}/{words.length} words
+              </span>
+            )}
+          </div>
+        </section>
+
+        {/* Passage Management */}
+        <section className="mb-16 py-12 bg-gray-50">
+          <h2 className="text-2xl font-bold text-gray-700 mb-8 text-center">
+            Passage Library
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-8">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-4">
+                Select Passage
+              </label>
+              <select
+                className="w-full px-0 py-3 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none text-lg"
+                value={customText ? `custom-${sourceTitle}` : selectedBuiltIn}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.startsWith('custom-')) {
+                    const customTitle = value.replace('custom-', '');
+                    const item = library.find(x => x.title === customTitle);
+                    if (item) {
+                      setCustomText(item.text);
+                      setSourceTitle(item.title);
+                      setSelectedBuiltIn("");
+                    }
+                  } else {
+                    setSelectedBuiltIn(value);
+                    setCustomText("");
+                    setSourceTitle("Built-in passage");
+                  }
+                }}
+              >
+                <optgroup label="Built-in Educational Passages">
+                  {BUILT_IN.map((b) => (
+                    <option key={b.id} value={b.id}>{b.title}</option>
+                  ))}
+                </optgroup>
+                {library.length > 0 && (
+                  <optgroup label="Custom Passages">
+                    {library.map((item) => (
+                      <option key={item.id} value={`custom-${item.title}`}>
+                        {item.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-4">
+                Upload Text File
+              </label>
               <input
-                ref={inputRef}
-                disabled={state !== "running"}
-                value={currentTypedWord}
-                onChange={onType}
-                placeholder={state === "running" ? "Start typing here..." : "Click 'Start Race' to begin!"}
-                className="w-full px-6 py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border-2 border-transparent focus:border-blue-500 outline-none text-lg font-mono disabled:opacity-50 transition-all"
+                type="file"
+                accept=".txt,.md"
+                className="w-full text-base py-3 bg-transparent border-0 border-b border-gray-300 focus:border-gray-600 outline-none"
+                onChange={(e) => onUpload(e.target.files?.[0])}
               />
-              
-              <p className="text-sm opacity-60 mt-2">
-                💡 Tip: {strict ? "Fix mistakes before continuing" : "Speed matters more than perfection"}
-              </p>
-            </div>
-
-            {/* Passage Management */}
-            <div className="rounded-3xl p-6 bg-white/70 dark:bg-zinc-900/60 shadow-xl">
-              <h3 className="font-bold text-lg mb-4">📚 Passage Library</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="text-sm font-medium block mb-2">Select Passage:</label>
-                  <select
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800"
-                    value={customText ? `custom-${sourceTitle}` : selectedBuiltIn}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value.startsWith('custom-')) {
-                        // Find and load custom passage
-                        const customTitle = value.replace('custom-', '');
-                        const item = library.find(x => x.title === customTitle);
-                        if (item) {
-                          setCustomText(item.text);
-                          setSourceTitle(item.title);
-                          setSelectedBuiltIn("");
-                        }
-                      } else {
-                        // Load built-in passage
-                        setSelectedBuiltIn(value);
-                        setCustomText("");
-                        setSourceTitle("Built-in passage");
-                      }
-                    }}
-                  >
-                    <optgroup label="Built-in Passages">
-                      {BUILT_IN.map((b) => (
-                        <option key={b.id} value={b.id}>{b.title}</option>
-                      ))}
-                    </optgroup>
-                    {library.length > 0 && (
-                      <optgroup label="Your Custom Passages">
-                        {library.map((item) => (
-                          <option key={item.id} value={`custom-${item.title}`}>
-                            {item.title}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
-                  </select>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium block">Upload File:</label>
-                  <input
-                    type="file"
-                    accept=".txt,.md"
-                    className="w-full text-sm"
-                    onChange={(e) => onUpload(e.target.files?.[0])}
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
-                  onClick={() => setShowCustomModal(true)}
-                >
-                  ✍️ Add Custom Text
-                </button>
-                
-                <button 
-                  className="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors" 
-                  onClick={saveCurrentToLibrary}
-                >
-                  💾 Save
-                </button>
-              </div>
             </div>
           </div>
-        </div>
 
-        {/* Recent Results */}
-        <div className="rounded-3xl p-6 bg-white/70 dark:bg-zinc-900/60 shadow-xl">
-          <h2 className="font-bold text-xl mb-4">🏆 Recent Results</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex justify-center gap-6">
+            <button
+              className="px-6 py-3 bg-gray-700 text-white hover:bg-gray-800 font-semibold transition-colors duration-200"
+              onClick={() => setShowCustomModal(true)}
+            >
+              Add Custom Text
+            </button>
+            
+            <button 
+              className="px-6 py-3 text-gray-600 hover:text-gray-800 font-semibold transition-colors duration-200" 
+              onClick={saveCurrentToLibrary}
+              disabled={!text}
+            >
+              Save to Library
+            </button>
+          </div>
+        </section>
+
+        {/* Performance History */}
+        <section className="py-12 bg-gray-50">
+          <h2 className="text-2xl font-bold text-gray-700 mb-8 text-center">
+            Performance History
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {(stats.history || []).slice(0, 6).map((h) => (
-              <div key={h.id} className="p-4 rounded-2xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-700">
-                <div className="font-bold text-sm mb-1">{h.title}</div>
-                <div className="text-xs opacity-70 mb-2">{new Date(h.date).toLocaleDateString()}</div>
-                <div className="flex justify-between text-sm">
-                  <span>🚀 {h.wpm} WPM</span>
-                  <span>🎯 {h.accuracy}%</span>
-                  <span>🏁 #{h.placing}</span>
+              <div key={h.id} className="p-8 bg-white">
+                <div className="font-bold text-lg mb-2 text-gray-700">{h.title}</div>
+                <div className="text-sm text-gray-500 mb-6">
+                  {new Date(h.date).toLocaleDateString()}
+                </div>
+                <div className="grid grid-cols-3 gap-6 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-gray-700">{h.wpm}</div>
+                    <div className="text-xs text-gray-500 uppercase font-semibold">WPM</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-700">{h.accuracy}%</div>
+                    <div className="text-xs text-gray-500 uppercase font-semibold">Accuracy</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-700">#{h.placing}</div>
+                    <div className="text-xs text-gray-500 uppercase font-semibold">Place</div>
+                  </div>
                 </div>
               </div>
             ))}
             {(stats.history || []).length === 0 && (
-              <div className="col-span-full text-center opacity-60 py-8">
-                No races completed yet. Start your first race! 🏁
+              <div className="col-span-full text-center text-gray-500 py-16">
+                <div className="text-xl font-semibold mb-2">No Performance Data</div>
+                <div>Complete your first race to see results.</div>
               </div>
             )}
           </div>
-        </div>
+        </section>
 
         {/* Custom Text Modal */}
         <AnimatePresence>
